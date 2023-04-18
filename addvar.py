@@ -131,10 +131,13 @@ def getCosThetaStar(event):
     "phi":event['WW_phi'],
     "mass":event['WW_mass']},with_name="Momentum4D")
     HH=objects1+objects2 #obj could be HH condidate    
-    vx=HH.px / (HH.mass * HH.beta)
-    vy=HH.py / (HH.mass * HH.beta)
-    vz=HH.pz / (HH.mass * HH.beta)
-    event['costhetastar']=vz
+    # vx=HH.px / (HH.mass * HH.beta)
+    # vy=HH.py / (HH.mass * HH.beta)
+    # vz=HH.pz / (HH.mass * HH.beta)
+    # event['costhetastar']=vz
+    p= np.sqrt(HH.px**2 + HH.py**2 + HH.pz**2)
+    event['costhetastar']=HH.pz/p
+
     return event
 
 def calculate_dR_gg_4jets(event):
@@ -175,9 +178,112 @@ def calculate_dR_4jets(event):
 def add_sale_factor(event,sclae_factor):
     event['weight_central']=sclae_factor*event.weight_central
     return event
+def momentum_tensor(list_of_jets_lorentzvectors_):
+    M_xy = np.array([[0.,0.],[0.,0.]])
+    for v_ in list_of_jets_lorentzvectors_:
+        #Transverse momentum tensor (symmetric matrix)
+        M_xy += np.array([
+        [v_.px*v_.px,v_.px*v_.py],
+        [v_.px*v_.py,v_.py*v_.py]]
+        )
+        eigvals, eigvecs = np.linalg.eig(M_xy)
+    eigvals.sort()
+    return eigvals, eigvecs
 
-inputfile=["/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m250.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m260.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m270.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m280.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m300.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m320.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m350.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m400.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m450.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m550.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m600.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m650.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m700.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m750.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m800.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m850.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m900.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m1000.parquet"]
-# inputfile=["/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DiphotonJetbox.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DatadrivenQCD.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/Data.parquet","/eos/user/s/shsong/combined_WWgg/DNN/cat2/m600.parquet"]
+def sphericity(eigvals):
+    # Definition: http://sro.sussex.ac.uk/id/eprint/44644/1/art%253A10.1007%252FJHEP06%25282010%2529038.pdf
+    spher_ = 2*eigvals[0] / (eigvals[1]+eigvals[0])
+    return spher_
+def costheta1(event):
+    W1=ak.zip({
+    "pt":event['W1_pt'],
+    "eta":event['W1_eta'],
+    "phi":event['W1_phi'],
+    "mass":event['W1_mass']},with_name="Momentum4D")
+    H1=ak.zip({
+    "pt":event['WW_pt'],
+    "eta":event['WW_eta'],
+    "phi":event['WW_phi'],
+    "mass":event['WW_mass']},with_name="Momentum4D")
+    H2=ak.zip({
+    "pt":event['Diphoton_pt'],
+    "eta":event['Diphoton_eta'],
+    "phi":event['Diphoton_phi'],
+    "mass":event['Diphoton_mass']},with_name="Momentum4D")
+    HH=H1+H2
+    # H1 rest frame
+    boost_vec=vector.obj(px=H1.px / H1.E,py=H1.py / H1.E,pz=H1.pz / H1.E)
+#     boost_vec=vector.obj(px=HH.px / (HH.E*HH.mass),py=HH.py / (HH.E*HH.mass),pz=HH.pz / (HH.E*HH.mass))
+    W1_rest=W1.boost(boost_vec)
+    HH_rest=HH.boost(boost_vec)
+    # calculate W1 HH momentum magnitude
+    p1 = np.sqrt(W1_rest.px**2 + W1_rest.py**2 + W1_rest.pz**2)
+    p2 = np.sqrt(HH_rest.px**2 + HH_rest.py**2 + HH_rest.pz**2)
+    # calculate  W1 unit vector and HH unit vector 
+    ux1 = W1_rest.px / p1
+    uy1 = W1_rest.py / p1
+    uz1 = W1_rest.pz / p1
+    ux2 = HH_rest.px / p2
+    uy2 = HH_rest.py / p2
+    uz2 = HH_rest.pz / p2
+    # The dot product of two unit vectors is equal to cos theta
+    cos_theta = ux1 * ux2 + uy1 * uy2 + uz1 * uz2
+    event['costheta1']=cos_theta
+    return event
+def costheta2(event):
+    W2=ak.zip({
+    "pt":event['W2_pt'],
+    "eta":event['W2_eta'],
+    "phi":event['W2_phi'],
+    "mass":event['W2_mass']},with_name="Momentum4D")
+    H1=ak.zip({
+    "pt":event['WW_pt'],
+    "eta":event['WW_eta'],
+    "phi":event['WW_phi'],
+    "mass":event['WW_mass']},with_name="Momentum4D")
+    H2=ak.zip({
+    "pt":event['Diphoton_pt'],
+    "eta":event['Diphoton_eta'],
+    "phi":event['Diphoton_phi'],
+    "mass":event['Diphoton_mass']},with_name="Momentum4D")
+    HH=H1+H2
+    # H1 rest frame
+    boost_vec=vector.obj(px=H2.px / H2.E,py=H2.py / H2.E,pz=H2.pz / H2.E)
+#     boost_vec=vector.obj(px=HH.px / (HH.E*HH.mass),py=HH.py / (HH.E*HH.mass),pz=HH.pz / (HH.E*HH.mass))
+    W2_rest=W2.boost(boost_vec)
+    HH_rest=HH.boost(boost_vec)
+    # calculate W1 HH momentum magnitude
+    p1 = np.sqrt(W2_rest.px**2 + W2_rest.py**2 + W2_rest.pz**2)
+    p2 = np.sqrt(HH_rest.px**2 + HH_rest.py**2 + HH_rest.pz**2)
+    # calculate  W1 unit vector and HH unit vector 
+    ux1 = W2_rest.px / p1
+    uy1 = W2_rest.py / p1
+    uz1 = W2_rest.pz / p1
+    ux2 = HH_rest.px / p2
+    uy2 = HH_rest.py / p2
+    uz2 = HH_rest.pz / p2
+    # The dot product of two unit vectors is equal to cos theta
+    cos_theta = ux1 * ux2 + uy1 * uy2 + uz1 * uz2
+    event['costheta2']=cos_theta
+    return event
+def calculate_sphericity(event):
+    sphericity_list=[]
+    jet_pt=ak.concatenate([ak.unflatten(event.jet_1_pt,counts=1),ak.unflatten(event.jet_2_pt,counts=1),ak.unflatten(event.jet_3_pt,counts=1),ak.unflatten(event.jet_4_pt,counts=1)],axis=1)
+    jet_eta=ak.concatenate([ak.unflatten(event.jet_1_eta,counts=1),ak.unflatten(event.jet_2_eta,counts=1),ak.unflatten(event.jet_3_eta,counts=1),ak.unflatten(event.jet_4_eta,counts=1)],axis=1)
+    jet_phi=ak.concatenate([ak.unflatten(event.jet_1_phi,counts=1),ak.unflatten(event.jet_2_phi,counts=1),ak.unflatten(event.jet_3_phi,counts=1),ak.unflatten(event.jet_4_phi,counts=1)],axis=1)
+    jet_mass=ak.concatenate([ak.unflatten(event.jet_1_mass,counts=1),ak.unflatten(event.jet_2_mass,counts=1),ak.unflatten(event.jet_3_mass,counts=1),ak.unflatten(event.jet_4_mass,counts=1)],axis=1)
+    jet_btag=ak.concatenate([ak.unflatten(event.jet_1_btagDeepB,counts=1),ak.unflatten(event.jet_2_btagDeepB,counts=1),ak.unflatten(event.jet_3_btagDeepB,counts=1),ak.unflatten(event.jet_4_btagDeepB,counts=1)],axis=1)
+    select_jet=ak.zip({"pt":jet_pt,"eta":jet_eta,"phi":jet_phi,"mass":jet_mass,"btag":jet_btag},with_name="Momentum4D")
+    for j in range(len(event)):
+        eigvals, eigvecs = momentum_tensor([select_jet[j][0],select_jet[j][1],select_jet[j][2],select_jet[j][3]])
+        spher_ = sphericity(eigvals)
+        sphericity_list.append(spher_)    
+    event['sphericity']=np.array(sphericity_list)
+    return event
+#initial signal parquet
+# inputfile=["/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m250.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m260.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m270.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m280.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m300.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m320.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m350.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m400.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m450.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m550.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m600.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m650.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m700.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m750.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m800.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m850.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m900.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/category2/DNN/m1000.parquet"]
+# inputfile=["/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DiphotonJetbox_reweight.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DatadrivenQCD_reweight.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/Data_new.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/m600.parquet"]
+inputfile=["/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m250.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m260.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m270.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m280.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m300.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m320.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m350.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m400.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m450.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m550.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m600.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m650.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m700.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m750.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m800.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m850.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m900.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m1000.parquet"]
 # scalefactor=[1.43242,1.15197,1,1]
 # outputfile=["/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DiphotonJetbox_reweight.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DatadrivenQCD_reweight.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/Data_new.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/m600.parquet"]
 outputfile=["/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m250.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m260.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m270.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m280.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m300.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m320.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m350.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m400.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m450.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m550.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m600.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m650.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m700.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m750.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m800.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m850.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m900.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m1000.parquet"]
@@ -185,13 +291,17 @@ outputfile=["/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DNN/m250.parquet",
 i=0
 for file in inputfile:
     event=load_parquet(file)
-    event=calclulate_W_info(event)
-    event=scaled_diphoton_info(event)
-    event=mass_resolution(event)
-    event=calculate_bscore(event)
+    # event=calclulate_W_info(event)
+    # event=scaled_diphoton_info(event)
+    # event=mass_resolution(event)
+    # event=calculate_bscore(event)
+    # event=getCosThetaStar(event)
+    # event=calculate_dR_gg_4jets(event)
+    # event=calculate_dR_4jets(event)
     event=getCosThetaStar(event)
-    event=calculate_dR_gg_4jets(event)
-    event=calculate_dR_4jets(event)
+    event=costheta1(event)
+    event=costheta2(event)
+    event=calculate_sphericity(event)
     # event=add_sale_factor(event,scalefactor[i])
     ak.to_parquet(event, outputfile[i])
     i=i+1
@@ -200,3 +310,5 @@ for file in inputfile:
 # parquet_to_root("/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DatadrivenQCD_reweight.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/DatadrivenQCD_reweight.root",treename="cat2",verbose=False)
 # parquet_to_root("/eos/user/s/shsong/combined_WWgg/datadriven/cat2/Data_new.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/Data_new.root",treename="cat2",verbose=False)
 # parquet_to_root("/eos/user/s/shsong/combined_WWgg/datadriven/cat2/m600.parquet","/eos/user/s/shsong/combined_WWgg/datadriven/cat2/m600.root",treename="cat2",verbose=False)
+
+
