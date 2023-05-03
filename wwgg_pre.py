@@ -19,7 +19,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.models import load_model
 import numpy as np
-
+import matplotlib.pyplot as plt
 import glob
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -32,7 +32,7 @@ import os
 from sklearn.preprocessing import StandardScaler
 import pickle
 
-training_columns=["scaled_leadphoton_pt","WW_pt","W1_mass","WW_mass","scaled_subleadphoton_pt","W2_mass","jet_1_pt","W1_pt","jet_4_pt","LeadPhoton_eta","SubleadPhoton_eta","jet_3_pt","jet_2_pt","W2_pt","nGoodAK4jets","Signal_Mass","Diphoton_minID","Diphoton_maxID","Diphoton_dR"] 
+training_columns=["scaled_leadphoton_pt","scaled_subleadphoton_pt","WW_pt","W1_mass","WW_mass","mindR_gg_4jets","maxdR_gg_4jets","mindR_4jets","maxdR_4jets","W2_mass","jet_1_pt","jet_2_pt","jet_4_pt","jet_4_E","jet_3_E","jet_2_E","jet_1_E","jet_3_pt","sum_two_max_bscore","LeadPhoton_eta","SubleadPhoton_eta","W1_pt","W2_pt","jet_1_eta","jet_2_eta","jet_3_eta","jet_4_eta","costhetastar","LeadPhoton_sigEoverE","SubleadPhoton_sigEoverE","Diphoton_pt","Diphoton_minID","Diphoton_maxID","Signal_Mass","nGoodAK4jets","sphericity","costheta1","costheta2","Diphoton_dR"] 
 # mass_list=[250, 260, 270, 280, 300, 320, 350, 400, 450,550, 600, 650, 700, 750, 800, 850, 900, 1000]
 mass_list=[600]
 
@@ -56,9 +56,10 @@ def load_trained_model(model_path):
     print('<load_trained_model> weights_path: ', model_path)
     model = load_model(model_path, compile=False)
     return model
-model=load_trained_model("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/model_Relu_19_features_200epochs_pointsName.h5")
+model=load_trained_model("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/model_Relu_39_features_200epochs_pointsName.h5")
 allsignal=[]
-
+def plot_diphoton_mass(event1,):
+    plt.hist
 for file in mass_list:
     
     signalname='m'+str(file)+'.parquet'
@@ -112,3 +113,4 @@ diphoton['dnn_score'] = pre_diphoton
 #     dip.to_parquet('/hpcfs/cms/cmsgpu/shaoweisong/output/cat2/diphoton_'+str(i)+'.parquet')
 datadriven.to_parquet('/hpcfs/cms/cmsgpu/shaoweisong/output/cat2/datadriven.parquet')
 diphoton.to_parquet('/hpcfs/cms/cmsgpu/shaoweisong/output/cat2/diphoton.parquet')
+

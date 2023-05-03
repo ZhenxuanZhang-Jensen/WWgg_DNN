@@ -31,9 +31,8 @@ from sklearn.metrics import mean_absolute_error as mae
 from sklearn.preprocessing import StandardScaler
 import pickle
 import re
-from scipy import integrate
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import roc_curve
+
+
 def load_trained_model(model_path):
     print('<load_trained_model> weights_path: ', model_path)
     model = load_model(model_path, compile=False)
@@ -141,19 +140,15 @@ def gscv_model(learn_rate=0.001):
 def new_model(num_variables,learn_rate=0.001):
     model = Sequential()
     #add one fully connected layers which have 10 neuron, 输入维度为训练变量数，
-    # model.add(tf.keras.layers.Dense(10, input_dim=num_variables,kernel_regularizer=tf.keras.regularizers.l2(0.01)))
-    model.add(tf.keras.layers.Dense(80, input_dim=num_variables,kernel_regularizer=tf.keras.regularizers.l2(0.01)))
+    model.add(tf.keras.layers.Dense(10, input_dim=num_variables,kernel_regularizer=tf.keras.regularizers.l2(0.01)))
     #添加批量归一化层，加速训练提高准确性
     model.add(tf.keras.layers.BatchNormalization())
     #非线性
     model.add(tf.keras.layers.Activation('relu'))
-    # model.add(tf.keras.layers.Dense(10))
-    model.add(tf.keras.layers.Dense(80))
-    
+    model.add(tf.keras.layers.Dense(10))
     model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.Activation('relu'))
-    # model.add(tf.keras.layers.Dense(4))
-    model.add(tf.keras.layers.Dense(10))
+    model.add(tf.keras.layers.Dense(4))
     model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.Activation('relu'))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid")) 
@@ -171,28 +166,26 @@ def scheduler(epoch):
 
 
 
-# sigFiles=glob.glob("/hpcfs/cms/cmsgpu/shaoweisong/input/cat2/m*parquet")
-# AllSample="gghh"
-# signals=[]
-# for f in sigFiles:
-#     processID=getMX(f)
-#     df=readDF(f,processID,False)
-#     print("load",processID)
+sigFiles=glob.glob("/hpcfs/cms/cmsgpu/shaoweisong/input/cat2/m*parquet")
+AllSample="gghh"
+signals=[]
+for f in sigFiles:
+    processID=getMX(f)
+    df=readDF(f,processID,False)
+    print("load",processID)
 
-#     signals.append(df)
-# signal=pd.concat(signals)
-# QCD=readDF('/hpcfs/cms/cmsgpu/shaoweisong/input/cat2/DatadrivenQCD.parquet',"BKG_QCD",True)
-# Dipho=readDF('/hpcfs/cms/cmsgpu/shaoweisong/input/cat2/DiphotonJetBox.parquet',"BKG_diphoton",True)
-# data_set=pd.concat([QCD,Dipho,signal])
-# data_set=data_set.fillna(-999)
+    signals.append(df)
+signal=pd.concat(signals)
+QCD=readDF('/hpcfs/cms/cmsgpu/shaoweisong/input/cat2/DatadrivenQCD.parquet',"BKG_QCD",True)
+Dipho=readDF('/hpcfs/cms/cmsgpu/shaoweisong/input/cat2/DiphotonJetBox.parquet',"BKG_diphoton",True)
+data_set=pd.concat([QCD,Dipho,signal])
+data_set=data_set.fillna(-999)
 allFeatures = ["Diphoton_dR"]
-# # 35 features
-# # training_columns=["new_weight","scaled_leadphoton_pt","scaled_subleadphoton_pt","WW_pt","W1_mass","WW_mass","mindR_gg_4jets","maxdR_gg_4jets","mindR_4jets","maxdR_4jets","W2_mass","jet_1_pt","jet_2_pt","jet_4_pt","jet_4_E","jet_3_E","jet_2_E","jet_1_E","jet_3_pt","sum_two_max_bscore","LeadPhoton_eta","SubleadPhoton_eta","W1_pt","W2_pt","jet_1_eta","jet_2_eta","jet_3_eta","jet_4_eta","costhetastar","LeadPhoton_sigEoverE","SubleadPhoton_sigEoverE","Diphoton_pt","Diphoton_minID","Diphoton_maxID","Signal_Mass"] 
-training_columns=["new_weight","scaled_leadphoton_pt","scaled_subleadphoton_pt","WW_pt","W1_mass","WW_mass","mindR_gg_4jets","maxdR_gg_4jets","mindR_4jets","maxdR_4jets","W2_mass","jet_1_pt","jet_2_pt","jet_4_pt","jet_4_E","jet_3_E","jet_2_E","jet_1_E","jet_3_pt","sum_two_max_bscore","LeadPhoton_eta","SubleadPhoton_eta","W1_pt","W2_pt","jet_1_eta","jet_2_eta","jet_3_eta","jet_4_eta","costhetastar","LeadPhoton_sigEoverE","SubleadPhoton_sigEoverE","Diphoton_pt","Diphoton_minID","Diphoton_maxID","Signal_Mass","nGoodAK4jets","sphericity","costheta1","costheta2"]
-# #normalize signal to background
-# data_set,norm_bkg,norm_sig=getClassWeight(data_set)
-# print("norm factor:",norm_bkg,norm_sig)
-data_set=pd.read_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2_40/dnn.csv',index_col=0)
+training_columns=["new_weight","scaled_leadphoton_pt","WW_pt","W1_mass","WW_mass","scaled_subleadphoton_pt","W2_mass","jet_1_pt","W1_pt","jet_4_pt","LeadPhoton_eta","SubleadPhoton_eta","jet_3_pt","jet_2_pt","W2_pt","nGoodAK4jets","Signal_Mass"] 
+#normalize signal to background
+data_set,norm_bkg,norm_sig=getClassWeight(data_set)
+print("norm factor:",norm_bkg,norm_sig)
+
 
 
 train_model=True
@@ -205,7 +198,7 @@ compute_importance=True
 lr_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
 
-# data_set.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/dnn.csv')
+data_set.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2_tmp/dnn.csv')
 # exit()
 for feature in allFeatures:
     training_columns.append(feature)
@@ -236,9 +229,9 @@ for feature in allFeatures:
     X_test_scaled = scaler.transform(X_test)
     traincsv = pd.DataFrame(X_train_scaled)
     testcsv=pd.DataFrame(X_test_scaled)
-    traincsv.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/train_scaled.csv')
-    testcsv.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/test_scaled.csv')
-    with open('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/scaler.pkl','wb') as f:
+    traincsv.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2_tmp/train_scaled.csv')
+    testcsv.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2_tmp/test_scaled.csv')
+    with open('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2_tmp/scaler.pkl','wb') as f:
         pickle.dump(scaler,f)
 
     if (useXGB):
@@ -246,8 +239,6 @@ for feature in allFeatures:
     else:
         name="Relu_"+ext+"_%sepochs_pointsName"%str(epochs)
     print("Model extension name: %s"%name)
-
-
     if (train_model):
         print("start training")
         if (useXGB):
@@ -266,7 +257,7 @@ for feature in allFeatures:
         'silent': 1
             }
             model = xgb.train(params, dtrain, num_boost_round=100)
-            model.save_model("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/model_%s.xgb"%(name))
+            model.save_model("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2_tmp/model_%s.xgb"%(name))
             gv = xgb.to_graphviz(model)
             gv.render("xgb-structure_%s"%(name), format="pdf")
             gv.render("xgb-structure_%s"%(name), format="png")
@@ -283,24 +274,23 @@ for feature in allFeatures:
                 print("Best score: %f , best params: %s" % (grid_result.best_score_,grid_result.best_params_))
             else:
                 early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.001, verbose=1)
-                #min_deltaR 降低
                 # model = leaky_model(len(training_columns)-1)
                 model = new_model(len(training_columns)-1)
                 # history=model.fit(X_train_scaled,y_train,validation_split=0.2,epochs=epochs,batch_size=200,verbose=2,shuffle=False,sample_weight=trainingweights,class_weight={0:norm_bkg,1:norm_sig},callbacks=[early_stopping_monitor])
                 history=model.fit(X_train_scaled,y_train,validation_split=0.2,epochs=epochs,batch_size=200,verbose=2,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,lr_callback])
                 # history=model.fit(X_train_scaled,y_train,validation_split=0.2,epochs=epochs,batch_size=200,verbose=2,shuffle=True,callbacks=[early_stopping_monitor])
-                model.save("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/model_%s.h5"%(name))
+                model.save("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2_tmp/model_%s.h5"%(name))
                 print(type(history.history["loss"]))
                 history_dict = {"loss":history.history["loss"],"val_loss":history.history["val_loss"]}
 
                 print(history_dict)
                 print(type(history_dict))
-                with open("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/history_%s.json"%name, "w") as f:
+                with open("history_%s.json"%name, "w") as f:
                     json.dump(history_dict, f)
 
     else:
         print("Start predict")
-        model=load_trained_model("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/model_%s.h5"%name)
+        model=load_trained_model("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2_tmp/model_%s.h5"%name)
 
 
 
@@ -328,17 +318,12 @@ for feature in allFeatures:
         'predictions': predictions,
         'train_tag':y_train.tolist(),
         'weights':trainingweights.tolist(),
-        'Signal_Mass':X_train[:,33].tolist(),
-        'Scaled_Mass':X_train_scaled[:,33].tolist()
         # 'Ymass':X_train_scaled[:,0].tolist()
     }
     data_test = {
         'predictions_test': predictions_test,
         'test_tag':y_test.tolist(),
         'weights':testweights.tolist(),
-        'Signal_Mass':X_test[:,33].tolist(),
-        'Scaled_Mass':X_test_scaled[:,33].tolist()
-
         # 'Ymass':X_test_scaled[:,0].tolist()
     }
     roc_train = {
@@ -352,12 +337,13 @@ for feature in allFeatures:
         'auc_test':roc_auc_test.tolist(),
     }
 
-    with open("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/predictions_%s.json"%name, "w") as f:
+    with open("predictions_%s.json"%name, "w") as f:
         json.dump(roc_train, f)
     df_train=pd.DataFrame(data_train)
-    df_train.to_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/df_train_%s.csv"%name)
+    df_train.to_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2_tmp/df_train_%s.csv"%name)
     df_test=pd.DataFrame(data_test)
-    df_test.to_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/df_test_%s.csv"%name)
+    df_test.to_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2_tmp/df_test_%s.csv"%name)
+
 
     if compute_importance:
 
@@ -379,6 +365,7 @@ for feature in allFeatures:
             results.append({'feature':training_columns[k+1],'mae':mae})
             X_test_scaled[:,k] = save_col            
 
+        print()
         df = pd.DataFrame(results)
         df = df.sort_values('mae')
         plt.figure(figsize=(30,20))
@@ -392,135 +379,9 @@ for feature in allFeatures:
         plt.ylabel('Feature',size=18)
         plt.legend()
         
-        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/feature_2.png")
+        plt.savefig("feature_2.png")
         plt.show()
         df = df.sort_values('mae',ascending=False)
-        df.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/feature_importance2.csv',index=False)
-
-    #draw importance for each mass point
-    mass_list=[250, 260, 270, 280, 300, 320, 350, 400, 450,550, 600, 650, 700, 750, 800, 850, 900, 1000]
-    con_df_test=pd.concat([testcsv,df_test],axis=1)
-    con_df_train=pd.concat([traincsv,df_train],axis=1)
-    for i in mass_list:
-        results=[]
-        selection="Signal_Mass=="+str(i)
-        sig_df=con_df_test.query(selection)
-        print("select %s events from signal%s"%(len(sig_df),i))
-        # X_test_scaled=sig_df.values[:,:35]
-        X_test_scaled=sig_df.values[:,:(len(training_columns)-1)]
-        y_test=sig_df['test_tag']
-        oof_preds_pnn=model.predict(X_test_scaled,verbose=0).squeeze()
-        baseline_mae = np.mean(np.abs(oof_preds_pnn-y_test))
-        results.append({'feature':'BASELINE','mae':baseline_mae})
-
-        # for k in tqdm(range(35)):
-        for k in tqdm(range(len(training_columns)-1)):
-
-            save_col = X_test_scaled[:,k].copy()
-            np.random.shuffle(X_test_scaled[:,k])
-            
-            # COMPUTE OOF MAE WITH FEATURE K SHUFFLED
-            oof_preds_pnn = model.predict(X_test_scaled, verbose=0).squeeze() 
-            mae = np.mean(np.abs( oof_preds_pnn-y_test ))
-            results.append({'feature':training_columns[k+1],'mae':mae})
-            X_test_scaled[:,k] = save_col 
-        df = pd.DataFrame(results)
-        df = df.sort_values('mae')
-        plt.figure(figsize=(20,18))
-        plt.barh(np.arange(len(training_columns)),df.mae)
-        plt.yticks(np.arange(len(training_columns)),df.feature.values,fontsize=18)
-        plt.xticks(fontsize=24)
-        plt.yticks(fontsize=24)
-        plt.title(' Feature Importance',size=38)
-        plt.ylim((-1,len(training_columns)))
-        plt.plot([baseline_mae,baseline_mae],[-1,len(training_columns)], '--', color='orange',
-            label=f'Baseline OOF\nMAE={baseline_mae:.3f}')
-        plt.xlabel( 'OOF MAE with feature permuted',size=28)
-        plt.ylabel('Feature',size=28)
-        plt.legend(fontsize=18)
-
-        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/sigmass"+str(i)+"feature.png")
-        plt.show()
-        df = df.sort_values('mae',ascending=False)
-        df.to_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/sigmass"+str(i)+"feature_importance.csv",index=False)   
-
-
-    for i in mass_list:
-        selection="Signal_Mass=="+str(i)
-        sig_df_test=con_df_test.query(selection)
-        sig_df_train=con_df_train.query(selection)
-        plt.figure(figsize=(10,10))
-
-        plt.hist(sig_df_test.query("test_tag==0").predictions_test,log=False,label="bkg",bins=np.linspace(0,1,20),weights=sig_df_test.query("test_tag==0").weights)
-        plt.hist(sig_df_test.query("test_tag==1").predictions_test,log=False,label="signal",bins=np.linspace(0,1,20),alpha=0.7,weights=sig_df_test.query("test_tag==1").weights)
-        plt.legend(fontsize=18)
-        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/sigmass"+str(i)+"_test_distributions.png")
-        plt.show()
-        plt.figure(figsize=(10,10))
-
-        plt.hist(sig_df_train.query("train_tag==0").predictions,log=False,label="bkg",bins=np.linspace(0,1,20),weights=sig_df_train.query("train_tag==0").weights)
-        plt.hist(sig_df_train.query("train_tag==1").predictions,log=False,label="signal",bins=np.linspace(0,1,20),alpha=0.7,weights=sig_df_train.query("train_tag==1").weights)
-        plt.legend(fontsize=18)
-        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/sigmass"+str(i)+"_train_distributions.png")
-        plt.show()
-
-        background_test=sig_df_test.query("test_tag==0")
-        bkgweight = background_test['weights'].values
-        bkgpredic = background_test['predictions_test'].values
-        #计算并存储sig bkg eff
-        background_efficiencies_test = []
-        signal_efficiencies_test = []
-
-        background_train=sig_df_train.query("train_tag==0")
-        bkgweight = background_train['weights'].values
-        bkgpredic = background_train['predictions'].values
-        #计算并存储sig bkg eff
-        background_efficiencies_train = []
-        signal_efficiencies_train = []
-
-        for cut in np.linspace(0, 1, 100):
-            sig_df_test['prediction_label'] = np.where(sig_df_test['predictions_test'] >= cut, 1, 0)
-            background_efficiency = (sig_df_test[sig_df_test['test_tag'] == 0]['prediction_label'] * sig_df_test[sig_df_test['test_tag'] == 0]['weights']).sum() / sig_df_test[sig_df_test['test_tag'] == 0]['weights'].sum()
-            signal_efficiency = (sig_df_test[sig_df_test['test_tag'] == 1]['prediction_label'] * sig_df_test[sig_df_test['test_tag'] == 1]['weights']).sum() / sig_df_test[sig_df_test['test_tag'] == 1]['weights'].sum()
-            background_efficiencies_test.append(background_efficiency)
-            signal_efficiencies_test.append(signal_efficiency)
-        fpr_test, tpr_test, thresholds_test = roc_curve(sig_df_test['test_tag'], sig_df_test['predictions_test'], sample_weight=sig_df_test['weights'])
-        # 计算 ROC 曲线下面积
-        # auc = roc_auc_score(sig_df['test_tag'], sig_df['predictions_test'], sample_weight=sig_df['weights'])
-        sorted_index = np.argsort(fpr_test)
-        fpr_list_sorted =  np.array(fpr_test)[sorted_index]
-        tpr_list_sorted = np.array(tpr_test)[sorted_index]
-        auc_test=integrate.trapz(y=tpr_list_sorted, x=fpr_list_sorted)
-        
-        for cut in np.linspace(0, 1, 100):
-            sig_df_train['prediction_label'] = np.where(sig_df_train['predictions'] >= cut, 1, 0)
-            background_efficiency = (sig_df_train[sig_df_train['train_tag'] == 0]['prediction_label'] * sig_df_train[sig_df_train['train_tag'] == 0]['weights']).sum() / sig_df_train[sig_df_train['train_tag'] == 0]['weights'].sum()
-            signal_efficiency = (sig_df_train[sig_df_train['train_tag'] == 1]['prediction_label'] * sig_df_train[sig_df_train['train_tag'] == 1]['weights']).sum() / sig_df_train[sig_df_train['train_tag'] == 1]['weights'].sum()
-            background_efficiencies_train.append(background_efficiency)
-            signal_efficiencies_train.append(signal_efficiency)
-        fpr_train, tpr_train, thresholds_train = roc_curve(sig_df_train['train_tag'], sig_df_train['predictions'], sample_weight=sig_df_train['weights'])
-        # 计算 ROC 曲线下面积
-        # auc = roc_auc_score(sig_df['train_tag'], sig_df['predictions'], sample_weight=sig_df['weights'])
-        sorted_index = np.argsort(fpr_train)
-        fpr_list_sorted =  np.array(fpr_train)[sorted_index]
-        tpr_list_sorted = np.array(tpr_train)[sorted_index]
-        auc_train=integrate.trapz(y=tpr_list_sorted, x=fpr_list_sorted)
-
-        plt.figure(figsize=(10,10))
-        # 绘制 ROC 曲线
-        plt.plot(background_efficiencies_test, signal_efficiencies_test, label='Test ROC curve %s'%auc_test)
-        plt.plot(background_efficiencies_train, signal_efficiencies_train, label='Train ROC curve %s'%auc_train)
-        plt.plot([0, 1], [0, 1], linestyle='--', label='Random classifier')
-        plt.xticks(fontsize=18)
-        plt.yticks(fontsize=18)
-        plt.xlabel('Background efficiency',size=24)
-        plt.ylabel('Signal efficiency',size=24)
-        plt.title('ROC curve', fontdict={'fontsize': 28})
-        plt.legend(fontsize=18)
-        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/sigmass"+str(i)+"trainROC.png")
-        plt.show()
-    
-
-
+        df.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2_tmp/feature_importance2.csv',index=False)
 
 
