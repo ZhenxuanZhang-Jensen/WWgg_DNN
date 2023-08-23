@@ -259,7 +259,7 @@ def calculate_dR_gg_4jets(event):
     diphoton_jetdR=ak.where((diphoton_jetdR>10),dummy,diphoton_jetdR)
     event['maxdR_gg_4jets']=diphoton_jetdR[ak.argsort(diphoton_jetdR)][:,7]
     jjggdRnoNAN=ak.fill_none(ak.pad_none(diphoton_jetdR[diphoton_jetdR!=-1],1),-1)
-    event['mindR_gg_4jets']=jjggdRnoNAN[ak.argsort(jjggdRnoNAN)][:,0]
+    event['mindR_4jets']=jjggdRnoNAN[ak.argsort(jjggdRnoNAN)][:,0]
     return event
 def calculate_dR_4jets(event):
     jet1=ak.zip({"pt":event.jet_1_pt,"eta":event.jet_1_eta,"phi":event.jet_1_phi,"phi":event.jet_1_phi},with_name="Momentum4D")
@@ -470,18 +470,13 @@ def electron(event):
     event['electron_iso_Et']=np.sqrt(electron.mass*electron.mass+electron.pt*electron.pt)
     event['electron_iso_MET_mt']=np.sqrt(electron.mass*electron.mass+2*(event.electron_iso_Et*event.MET_pt-electron.pt*event.MET_pt))
     return event
-#####
-# inputfile=['/eos/user/s/shsong/HHWWgg/parquet/data/merged_nominal.parquet']
-# outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/Data_2017.parquet']
-# outputfile_SL=['/eos/user/s/shsong/HHWWgg/parquet/cat2/Data_2017.parquet']
-
 ####FH DNN
-# inputfile=['/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-250_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-300_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-400_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-550_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-650_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-750_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-900_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/data/merged_nominal.parquet']
-# outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/FH250.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH300.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH400.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH550.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH650.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH750.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH900.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Data_2017.parquet']
+inputfile=['/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-250_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-300_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-400_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-550_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-650_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-750_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-900_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-1000_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/data/merged_nominal.parquet']
+outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/FH250.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH300.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH400.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH550.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH650.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH750.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH900.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH1000.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Data_2017.parquet']
 
-inputfile=['/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_DiPhotonJetsBox_M40_80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_DiPhotonJetsBox_MGG_80toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_GJet_Pt_20to40_DoubleEMEnriched_MGG_80toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_GJet_Pt_20toInf_DoubleEMEnriched_MGG_40to80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_2017/merged_nominal.parquet']
-outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/DiPhotonJetsBox_MGG_80toInf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Gjet_Pt20_40_2017.parquet']
-outputfile_SL=['/eos/user/s/shsong/HHWWgg/parquet/cat2/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/DiPhotonJetsBox_MGG_80toInf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Gjet_Pt20_40_2017.parquet']
+# inputfile=['/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_DiPhotonJetsBox_M40_80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_DiPhotonJetsBox_MGG_80toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_GJet_Pt_20to40_DoubleEMEnriched_MGG_80toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_GJet_Pt_20toInf_DoubleEMEnriched_MGG_40to80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_2017/merged_nominal.parquet']
+# outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/DiPhotonJetsBox_MGG_80toInf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Gjet_Pt20_40_2017.parquet']
+# outputfile_SL=['/eos/user/s/shsong/HHWWgg/parquet/cat2/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/DiPhotonJetsBox_MGG_80toInf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Gjet_Pt20_40_2017.parquet']
 # inputfile=['/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_WWG_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_W1JetsToLNu_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_W2JetsToLNu_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_W3JetsToLNu_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_W4JetsToLNu_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_WWTo1L1Nu2Q_4f_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/WJetsToQQ_HT-200to400_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/WJetsToQQ_HT-600to800_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/WJetsToQQ_HT-400to600_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/WJetsToQQ_HT-800toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/TTbar/UL17_TTGG_0Jets/UL17_TTGG_0Jets_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/TTbar/UL17_TTGJets/UL17_TTGJets_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/TTbar/UL17_TTJets/UL17_TTJets_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/TTbar/UL17_ttWJets/UL17_ttWJets_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/QCD/UL17_QCD_Pt-30to40_MGG-80toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/QCD/UL17_QCD_Pt-30toInf_MGG-40to80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/QCD/UL17_QCD_Pt-40ToInf_MGG-80ToInf_2017/merged_nominal.parquet']
 # outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/WWG.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/W1JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/W2JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/W3JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/W4JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WWTo1L1Nu2Q.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WJetsToQQ200to400.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WJetsToQQ600to800.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WJetsToQQ400to600.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WJetsToQQ800toInf.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/TTGG_0Jets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/TTGJets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/TTJets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/ttWJets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/QCDpt30To40.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/QCDpt30ToInf.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/QCDpt40ToInf.parquet']
 
@@ -509,8 +504,8 @@ for file in inputfile:
     print('Got CosTheta1')
     eventFH=costheta2(eventFH)
     print('Got CosTheta2')
-    eventFH=get_minmaxID(eventFH)
-    print('Got get_minmaxID')
+    # eventFH=get_minmaxID(eventFH)
+    # print('Got get_minmaxID')
     # eventFH=calculate_sphericity(eventFH)
     # print('Got sphericity')
 
@@ -518,20 +513,20 @@ for file in inputfile:
 
     ak.to_parquet(eventFH, outputfile_FH[i])
 
-    eventSL=split_electron_category(eventSL)
-    print('Got electron event')
-    eventSL=calculate_Wjj(eventSL)
-    print('Got W info')
-    eventSL=calculate_photon_info(eventSL)
-    print('Got photon info')
-    eventSL=E_resolution(eventSL)
-    print('Got E resolution')
-    eventSL=electron(eventSL)
-    print('Got electron info')
-    eventSL=get_minmaxID(eventSL)
-    print('Got get_minmaxID')
-    ak.to_parquet(eventSL, outputfile_SL[i])
-    parquet_to_root(outputfile_SL[i],outputfile_SL[i].replace("parquet","root"),treename="cat2",verbose=False)
+    # eventSL=split_electron_category(eventSL)
+    # print('Got electron event')
+    # eventSL=calculate_Wjj(eventSL)
+    # print('Got W info')
+    # eventSL=calculate_photon_info(eventSL)
+    # print('Got photon info')
+    # eventSL=E_resolution(eventSL)
+    # print('Got E resolution')
+    # eventSL=electron(eventSL)
+    # print('Got electron info')
+    # # eventSL=get_minmaxID(eventSL)
+    # # print('Got get_minmaxID')
+    # ak.to_parquet(eventSL, outputfile_SL[i])
+    # parquet_to_root(outputfile_SL[i],outputfile_SL[i].replace("parquet","root"),treename="cat2",verbose=False)
     parquet_to_root(outputfile_FH[i],outputfile_FH[i].replace("parquet","root"),treename="cat7",verbose=False)
     i=i+1
 

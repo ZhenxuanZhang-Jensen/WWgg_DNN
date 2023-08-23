@@ -6,12 +6,12 @@ import sys
 import os
 import numpy as np
 # plotdir=sys.argv[1]
-plotdir="/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2"
+plotdir="/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7"
 
 # useXGB=sys.argv[2]
 useXGB=bool(False)
 # exts=["1_features","2_features","3_features","4_features","5_features","6_features","7_features","8_features","9_features","10_features","11_features","12_features","13_features","14_features","15_features","16_features","17_features","18_features","19_features","20_features"]
-exts=["39_features"]
+exts=["36_features"]
 if(useXGB=="True"):
     useXGB=True
 else:
@@ -55,9 +55,9 @@ for ext in exts:
         if (useXGB):
             points="Relu_BDT_"+str(points)
         else:
-            points="Relu_"+ext+"_200epochs_"+str(points)
+            points="Relu_"+ext+"_30epochs_"+str(points)
         if(not useXGB ):
-            history = open("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/history_%s.json"%points, 'r', encoding='utf-8')
+            history = open("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7/history_%s.json"%points, 'r', encoding='utf-8')
             history=json.load(history)
             loss = history["loss"]
             val_loss = history["val_loss"]
@@ -77,7 +77,7 @@ for ext in exts:
             plt.clf()
             clearVar(history)
 
-        predict = open("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/predictions_%s.json"%points, 'r', encoding='utf-8')
+        predict = open("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7/predictions_%s.json"%points, 'r', encoding='utf-8')
         prediction=json.load(predict)
 
         plt.plot(prediction["test_fpr"],prediction["test_tpr"],label="test ROC(AUC= %0.3f)"%prediction["auc_test"])
@@ -93,7 +93,7 @@ for ext in exts:
 
 
 
-        df_test=pd.read_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/df_train_%s.csv"%points)
+        df_test=pd.read_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7/df_train_%s.csv"%points)
         print("Train weighted",df_test.query("train_tag==0").weights.sum(),df_test.query("train_tag==1").weights.sum())
         print("Train unweighted",df_test.query("train_tag==0").shape[0],df_test.query("train_tag==1").shape[0])
         
@@ -111,7 +111,7 @@ for ext in exts:
         TPR,FPR=getFprTpr(df_test.predictions,df_test.train_tag)
         
 
-        df_test=pd.read_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat2/df_test_%s.csv"%points)
+        df_test=pd.read_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7/df_test_%s.csv"%points)
         print("test weighted",df_test.query("test_tag==0").weights.sum(),df_test.query("test_tag==1").weights.sum())
         print("test unweighted",df_test.query("test_tag==0").shape[0],df_test.query("test_tag==1").shape[0])
         plt.hist(df_test.query("test_tag==0").predictions_test,log=True,label="bkg",bins=np.linspace(0,1,11))
