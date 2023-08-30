@@ -5,7 +5,9 @@ from parquet_to_root import parquet_to_root
 
 # GJets1=ROOT.TFile.Open("/eos/user/s/shsong/HHWWgg/root/cat2/GJet.root")
 # GJets1_tree=GJets1.Get("cat2")
-GJets1=ROOT.TFile.Open("/eos/user/s/shsong/HHWWgg/root/cat7/GJet.root")
+# GJets1=ROOT.TFile.Open("/eos/user/s/shsong/HHWWgg/root/cat7_2jet/GJet.root")
+# GJets1=ROOT.TFile.Open("/eos/user/s/shsong/HHWWgg/root/cat7_3jet/GJet.root")
+GJets1=ROOT.TFile.Open("/eos/user/s/shsong/HHWWgg/root/cat7_4jet/GJet.root")
 GJets1_tree=GJets1.Get("cat7")
 # GJets1=ROOT.TFile.Open("/eos/user/s/shsong/combined_WWgg/root/datadriven/category3/raw/GJet_e.root")
 # GJets1_tree=GJets1.Get("cat2")
@@ -17,12 +19,16 @@ h_minphotonID.Fit(photonIDPDF_fake,"R")
 c1=ROOT.TCanvas("c1","c1",600,800)
 h_minphotonID.Draw("E1")
 # c1.SaveAs("fakephoton_pdf_cat2.png")
-c1.SaveAs("fakephoton_pdf_cat7.png")
+# c1.SaveAs("fakephoton_pdf_cat7_2jet.png")
+# c1.SaveAs("fakephoton_pdf_cat7_3jet.png")
+c1.SaveAs("fakephoton_pdf_cat7_4jet.png")
 
 # Data=ROOT.TFile.Open("/eos/user/s/shsong/HHWWgg/root/cat2/Data_2017.root")
 # Data_tree=Data.Get("cat2")
 # 
-Data=ROOT.TFile.Open("/eos/user/s/shsong/HHWWgg/root/cat7/Data_2017.root")
+# Data=ROOT.TFile.Open("/eos/user/s/shsong/HHWWgg/root/cat7_2jet/Data_2017.root")
+# Data=ROOT.TFile.Open("/eos/user/s/shsong/HHWWgg/root/cat7_3jet/Data_2017.root")
+Data=ROOT.TFile.Open("/eos/user/s/shsong/HHWWgg/root/cat7_4jet/Data_2017.root")
 Data_tree=Data.Get("cat7")
 # Data=ROOT.TFile.Open("/eos/user/s/shsong/combined_WWgg/root/datadriven/category3/raw/Data_e.root")
 nevents=Data_tree.GetEntries()
@@ -74,7 +80,9 @@ import pandas
 dataframe=pandas.DataFrame(d) 
 
 # DataFile=awkward.from_parquet("/eos/user/s/shsong/HHWWgg/parquet/cat2/Data_2017.parquet")
-DataFile=awkward.from_parquet("/eos/user/s/shsong/HHWWgg/parquet/cat7/Data_2017.parquet")
+# DataFile=awkward.from_parquet("/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/Data_2017.parquet")
+# DataFile=awkward.from_parquet("/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/Data_2017.parquet")
+DataFile=awkward.from_parquet("/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/Data_2017.parquet")
 # DataFile=DataFile[DataFile.weight!=-999]
 DataFile["Diphoton_maxID"]=dataframe.maxID
 DataFile["Diphoton_minID"]=dataframe.minID
@@ -83,7 +91,11 @@ DataFile["weight_central"]=dataframe.new_weight
 DataFile=DataFile[DataFile.weight_central!=-999]
 # awkward.to_parquet(DataFile,"/eos/user/s/shsong/HHWWgg/parquet/cat2/DatadrivenQCD_usingcat7Gjet.parquet")
 # parquet_to_root("/eos/user/s/shsong/HHWWgg/parquet/cat2/DatadrivenQCD_usingcat7Gjet.parquet","/eos/user/s/shsong/HHWWgg/root/cat2/DatadrivenQCD_usingcat7Gjet.root",treename="cat2",verbose=False)
-awkward.to_parquet(DataFile,"/eos/user/s/shsong/HHWWgg/parquet/cat7/DatadrivenQCD.parquet")
-parquet_to_root("/eos/user/s/shsong/HHWWgg/parquet/cat7/DatadrivenQCD.parquet","/eos/user/s/shsong/HHWWgg/root/cat7/DatadrivenQCD.root",treename="cat7",verbose=False)
+# awkward.to_parquet(DataFile,"/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/DatadrivenQCD.parquet")
+# awkward.to_parquet(DataFile,"/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/DatadrivenQCD.parquet")
+awkward.to_parquet(DataFile,"/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/DatadrivenQCD.parquet")
+# parquet_to_root("/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/DatadrivenQCD.parquet","/eos/user/s/shsong/HHWWgg/root/cat7_2jet/DatadrivenQCD.root",treename="cat7",verbose=False)
+# parquet_to_root("/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/DatadrivenQCD.parquet","/eos/user/s/shsong/HHWWgg/root/cat7_3jet/DatadrivenQCD.root",treename="cat7",verbose=False)
+parquet_to_root("/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/DatadrivenQCD.parquet","/eos/user/s/shsong/HHWWgg/root/cat7_4jet/DatadrivenQCD.root",treename="cat7",verbose=False)
 
 # dataframe("data_weight.csv")

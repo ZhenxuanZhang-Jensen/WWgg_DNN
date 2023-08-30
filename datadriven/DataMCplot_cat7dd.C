@@ -54,6 +54,7 @@ const string OutputPlotDir = "/eos/user/s/shsong/www/combined_Data_MC_cat7dd";
 
 // const string Preselections="( Diphoton_mass <= 115. || Diphoton_mass >= 135.)&& (category==3)&&(Diphoton_minID>-0.7)&&(electron_pt>-999)";
 const string Preselections="( Diphoton_mass <= 115. || Diphoton_mass >= 135.)&&(Diphoton_minID>-0.7)";
+// const string Preselections="(Diphoton_minID>-0.7)";
 // const string Preselections="( Diphoton_mass <= 115. || Diphoton_mass >= 135.)&& category==2&&(Diphoton_minID>-0.7)&&(Diphoton_maxID>-0.7)";//&&(dnn_score<0.91)";
 // "weight*41.5"; // add a new weight to scale diphoton bdt score >-0.85
 const string MCWeight = "weight_central";
@@ -139,8 +140,10 @@ void DrawMyPlots(string Object, string Selections,  string XTitle, string YUnit,
   Double_t scale_Data = 1.0/Ntot_Data;
   h_data->Sumw2();
   //h_data->Scale(scale_Data);
+  // const string MCWeight1 = "weight_central";
   const string MCWeight1 = "1.27936*weight_central";
   const string MCWeight2 = "1.06415*weight_central";  
+  // const string MCWeight2 = "weight_central";  
 
 
   //---MC---
@@ -513,6 +516,7 @@ void DataMCplot_cat7dd(){
   gStyle->SetOptStat(0);
   gStyle->SetOptFit(111);	
   // DrawMyPlots("Diphoton_mass", Preselections, "m_{#gamma#gamma} (GeV)", "GeV", "DiphotonMass", 18, 100., 180., 0, 0);
+  DrawMyPlots("Diphoton_pt", Preselections, "pt_{#gamma#gamma} (GeV)", "GeV", "Diphoton_pt", 18, 100., 300., 0, 0);
   // DrawMyPlots("LeadPhoton_pt", Preselections, "LeadPhoton_{pt} (GeV)", "GeV", "LeadPhoton_pt", 15, 30., 180., 0, 0);
   // DrawMyPlots("LeadPhoton_eta", Preselections, "LeadPhoton_{eta} (GeV)", "GeV", "LeadPhoton_eta", 15, -2.5, 2.5, 0, 0);
   // DrawMyPlots("LeadPhoton_phi", Preselections, "LeadPhoton_{phi} (GeV)", "GeV", "LeadPhoton_phi", 20, -4., 4., 0, 0);
@@ -560,12 +564,12 @@ void DataMCplot_cat7dd(){
   // DrawMyPlots("WW_mass", Preselections, "WW_{mass} (GeV)", "GeV", "WW_mass", 20,50., 450., 0, 0);
   // DrawMyPlots("WW_eta", Preselections, "WW_{eta} (GeV)", "GeV", "WW_eta",  15, -2.5, 2.5, 0, 0);
   // DrawMyPlots("WW_phi", Preselections, "WW_{phi} (GeV)", "GeV", "WW_phi", 15,-4., 4., 0, 0);
-  DrawMyPlots("dphi_j1j2", Preselections, "dphi_j1j2", " ", "j1j2_phi", 15,0., 7., 0, 0);
-  DrawMyPlots("dphi_j1j3", Preselections, "dphi_j1j3", " ", "j1j3_phi", 15,0., 7., 0, 0);
-  DrawMyPlots("dphi_j1j4", Preselections, "dphi_j1j4", " ", "j1j4_phi", 15,0., 7., 0, 0);
-  DrawMyPlots("dphi_j2j3", Preselections, "dphi_j2j3", " ", "j2j3_phi", 15,0., 7., 0, 0);
-  DrawMyPlots("dphi_j2j4", Preselections, "dphi_j2j4", " ", "j2j4_phi", 15,0., 7., 0, 0);
-  DrawMyPlots("dphi_j3j4", Preselections, "dphi_j3j4", " ", "j3j4_phi", 15,0., 7., 0, 0);
+  // DrawMyPlots("dphi_j1j2", Preselections, "dphi_j1j2", " ", "j1j2_phi", 15,0., 7., 0, 0);
+  // DrawMyPlots("dphi_j1j3", Preselections, "dphi_j1j3", " ", "j1j3_phi", 15,0., 7., 0, 0);
+  // DrawMyPlots("dphi_j1j4", Preselections, "dphi_j1j4", " ", "j1j4_phi", 15,0., 7., 0, 0);
+  // DrawMyPlots("dphi_j2j3", Preselections, "dphi_j2j3", " ", "j2j3_phi", 15,0., 7., 0, 0);
+  // DrawMyPlots("dphi_j2j4", Preselections, "dphi_j2j4", " ", "j2j4_phi", 15,0., 7., 0, 0);
+  // DrawMyPlots("dphi_j3j4", Preselections, "dphi_j3j4", " ", "j3j4_phi", 15,0., 7., 0, 0);
   
   // DrawMyPlots("WW_phi", Preselections, "WW_{phi} (GeV)", "GeV", "WW_phi", 15,-4., 4., 0, 0);
   // DrawMyPlots("sum_two_max_bscore", Preselections, "sum_two_max_bscore", " ", "sum_two_max_bscore", 15, 0., 1.5, 0, 0);

@@ -15,9 +15,13 @@ def load_parquet(fname):
     print("loading events from %s" % fname)
     events=ak.from_parquet(fname)
     eventsSL=events[events.category==2]
+    # eventsSL_1jet=eventsSL[eventsSL.nGoodAK4jets==1]
+    # eventsSL_2jet=eventsSL[eventsSL.nGoodAK4jets==2]
     eventsFH=events[events.category==7]
-    print(len(eventsFH))
-    return eventsSL,eventsFH
+    eventsFH_2jet=eventsFH[eventsFH.nGoodAK4jets==2]
+    eventsFH_3jet=eventsFH[eventsFH.nGoodAK4jets==3]
+    eventsFH_4jet=eventsFH[eventsFH.nGoodAK4jets>=4]
+    return eventsSL,eventsFH,eventsFH_2jet,eventsFH_3jet,eventsFH_4jet
 def get_minmaxID(event):
     pho_pt=ak.concatenate([ak.unflatten(event.LeadPhoton_pt,counts=1),ak.unflatten(event.SubleadPhoton_pt,counts=1)],axis=1)
     pho_eta=ak.concatenate([ak.unflatten(event.LeadPhoton_eta,counts=1),ak.unflatten(event.SubleadPhoton_eta,counts=1)],axis=1)
@@ -61,89 +65,88 @@ def select_jet(event):
     event['SelectedJet_puId']=event.jet_1_puId
     event['SelectedJet_btagDeepFlavB']=event.jet_1_btagDeepFlavB
     return event
-def calclulate_W_info(event):
+def calclulate_WW_info(event):
     leadjet=vector.obj(pt=event.jet_1_pt,eta=event.jet_1_eta,phi=event.jet_1_phi,mass=event.jet_1_mass)
-    event['jet_1_E']=np.nan_to_num(leadjet.E, nan=-1)
-
     subleadjet=vector.obj(pt=event.jet_2_pt,eta=event.jet_2_eta,phi=event.jet_2_phi,mass=event.jet_2_mass)
-    event['jet_2_E']=np.nan_to_num(subleadjet.E, nan=-1)
-    dummy = ak.zeros_like(leadjet.pt)
-    dummy = ak.ones_like(ak.fill_none(dummy, 0))
-    event['jet_2_E']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_2_E'])
-    event['jet_2_pt']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_2_pt'])
-    event['jet_2_eta']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_2_eta'])
-    event['jet_2_phi']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_2_phi'])
-    event['jet_2_mass']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_2_mass'])
+    event['jet_2_E']=subleadjet.E
     W1=leadjet+subleadjet
     event['W1_pt']=W1.pt
     event['W1_eta']=W1.eta
     event['W1_phi']=W1.phi
     event['W1_mass']=W1.mass
-    event['W1_E']=np.nan_to_num(W1.E, nan=-1)
-    event['W1_pt']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W1_pt'])
-    event['W1_eta']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W1_eta'])
-    event['W1_phi']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W1_phi'])
-    event['W1_mass']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W1_mass'])
-    event['W1_E']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W1_E'])
-
+    event['W1_E']=W1.E
     subsubleadjet=vector.obj(pt=event.jet_3_pt,eta=event.jet_3_eta,phi=event.jet_3_phi,mass=event.jet_3_mass)
-    event['jet_3_E']=np.nan_to_num(subsubleadjet.E, nan=-999.0)
-    event['jet_3_E']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_3_E'])
-    event['jet_3_pt']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_3_pt'])
-    event['jet_3_eta']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_3_eta'])
-    event['jet_3_phi']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_3_phi'])
-    event['jet_3_mass']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_3_mass'])
+    event['jet_3_E']=subsubleadjet.E
     subsubsubleadjet=vector.obj(pt=event.jet_4_pt,eta=event.jet_4_eta,phi=event.jet_4_phi,mass=event.jet_4_mass)
-    event['jet_4_E']=np.nan_to_num(subsubsubleadjet.E, nan=-999.0)
-    event['jet_4_E']=ak.where(subsubsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_4_E'])
-    event['jet_4_pt']=ak.where(subsubsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_4_pt'])
-    event['jet_4_eta']=ak.where(subsubsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_4_eta'])
-    event['jet_4_phi']=ak.where(subsubsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_4_phi'])
-    event['jet_4_mass']=ak.where(subsubsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_4_mass'])
-    
-    event['dphi_j1j2']=abs(event.jet_1_phi-event.jet_2_phi)
-    event['dphi_j1j2']=ak.where(((event.jet_1_pt<0)|(event.jet_2_pt<0)),(ak.ones_like(dummy)*(-1)),event['dphi_j1j2'])
-    event['dphi_j1j3']=abs(event.jet_1_phi-event.jet_3_phi)
-    event['dphi_j1j3']=ak.where(((event.jet_1_pt<0)|(event.jet_3_pt<0)),(ak.ones_like(dummy)*(-1)),event['dphi_j1j3'])
-    event['dphi_j1j4']=abs(event.jet_1_phi-event.jet_4_phi)
-    event['dphi_j1j4']=ak.where(((event.jet_1_pt<0)|(event.jet_4_pt<0)),(ak.ones_like(dummy)*(-1)),event['dphi_j1j4'])
-    event['dphi_j2j3']=abs(event.jet_2_phi-event.jet_3_phi)
-    event['dphi_j2j3']=ak.where(((event.jet_2_pt<0)|(event.jet_3_pt<0)),(ak.ones_like(dummy)*(-1)),event['dphi_j2j3'])
-    event['dphi_j2j4']=abs(event.jet_2_phi-event.jet_4_phi)
-    event['dphi_j2j4']=ak.where(((event.jet_2_pt<0)|(event.jet_4_pt<0)),(ak.ones_like(dummy)*(-1)),event['dphi_j2j4'])
-    event['dphi_j3j4']=abs(event.jet_3_phi-event.jet_4_phi)
-    event['dphi_j3j4']=ak.where(((event.jet_3_pt<0)|(event.jet_4_pt<0)),(ak.ones_like(dummy)*(-1)),event['dphi_j3j4'])
+    event['jet_4_E']=subsubsubleadjet.E
     W2=subsubleadjet+subsubsubleadjet
     event['W2_pt']=W2.pt
     event['W2_eta']=W2.eta
     event['W2_phi']=W2.phi
     event['W2_mass']=W2.mass
-    event['W2_E']=np.nan_to_num(W2.E, nan=-1)
-    
-    event['W2_E']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W2_E'])
-    event['W2_pt']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W2_pt'])
-    event['W2_eta']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W2_eta'])
-    event['W2_phi']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W2_phi'])
-    event['W2_mass']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W2_mass'])
-        
+    event['W2_E']=W2.E
     WW=W1+W2
     event['WW_pt']=WW.pt
     event['WW_eta']=WW.eta
     event['WW_phi']=WW.phi
     event['WW_mass']=WW.mass
     event['WW_E']=WW.E
-    
-    event['WW_E']=ak.where(((W2.pt<0)|(W1.pt<0)),(ak.ones_like(dummy)*(-1)),event['WW_E'])
-    event['WW_pt']=ak.where(((W2.pt<0)|(W1.pt<0)),(ak.ones_like(dummy)*(-1)),event['WW_pt'])
-    event['WW_eta']=ak.where(((W2.pt<0)|(W1.pt<0)),(ak.ones_like(dummy)*(-1)),event['WW_eta'])
-    event['WW_phi']=ak.where(((W2.pt<0)|(W1.pt<0)),(ak.ones_like(dummy)*(-1)),event['WW_phi'])
-    event['WW_mass']=ak.where(((W2.pt<0)|(W1.pt<0)),(ak.ones_like(dummy)*(-1)),event['WW_mass'])
-
+    event['dphi_j1j2']=leadjet.deltaphi(subleadjet)
+    event['dphi_j1j3']=leadjet.deltaphi(subsubleadjet)
+    event['dphi_j1j4']=leadjet.deltaphi(subsubsubleadjet)
+    event['dphi_j2j3']=subleadjet.deltaphi(subsubleadjet)
+    event['dphi_j2j4']=subleadjet.deltaphi(subsubsubleadjet)
+    event['dphi_j3j4']=subsubleadjet.deltaphi(subsubsubleadjet)
+    return event
+def calculate_W3j_info(event):
+    leadjet=vector.obj(pt=event.jet_1_pt,eta=event.jet_1_eta,phi=event.jet_1_phi,mass=event.jet_1_mass)
+    subleadjet=vector.obj(pt=event.jet_2_pt,eta=event.jet_2_eta,phi=event.jet_2_phi,mass=event.jet_2_mass)
+    event['jet_2_E']=subleadjet.E
+    W1=leadjet+subleadjet
+    event['W1_pt']=W1.pt
+    event['W1_eta']=W1.eta
+    event['W1_phi']=W1.phi
+    event['W1_mass']=W1.mass
+    event['W1_E']=W1.E
+    subsubleadjet=vector.obj(pt=event.jet_3_pt,eta=event.jet_3_eta,phi=event.jet_3_phi,mass=event.jet_3_mass)
+    event['jet_3_E']=subsubleadjet.E
+    event['dphi_j1j2']=leadjet.deltaphi(subleadjet)
+    event['dphi_j1j3']=leadjet.deltaphi(subsubleadjet)
+    event['dphi_j2j3']=subleadjet.deltaphi(subsubleadjet)
+    return event
+def calculate_Wjj(event):
+    leadjet=vector.obj(pt=event.jet_1_pt,eta=event.jet_1_eta,phi=event.jet_1_phi,mass=event.jet_1_mass)
+    event['jet_1_E']=leadjet.E
+    subleadjet=vector.obj(pt=event.jet_2_pt,eta=event.jet_2_eta,phi=event.jet_2_phi,mass=event.jet_2_mass)
+    event['jet_2_E']=subleadjet.E
+    W1=leadjet+subleadjet
+    event['W1_pt']=W1.pt
+    event['W1_eta']=W1.eta
+    event['W1_phi']=W1.phi
+    event['W1_mass']=W1.mass
+    event['W1_E']=W1.E
     return event
 def scaled_diphoton_info(event):
     event['scaled_leadphoton_pt']=event['LeadPhoton_pt']/event['Diphoton_mass']
     event['scaled_subleadphoton_pt']=event['SubleadPhoton_pt']/event['Diphoton_mass']
 #     event['Diphoton_mass']=event['CMS_hgg_mass']
+    return event
+def Diphoton_E_mass_resolution(event):
+    leadphoton=vector.obj(pt=event.LeadPhoton_pt,eta=event.LeadPhoton_eta,phi=event.LeadPhoton_phi,mass=event.LeadPhoton_mass)
+    event['LeadPhoton_E']=leadphoton.E
+    # leadpho_px=event['LeadPhoton_pt']*np.cos(event['LeadPhoton_phi'])
+    # leadpho_py=event['LeadPhoton_pt']*np.sin(event['LeadPhoton_phi'])
+    # leadpho_pz=event['LeadPhoton_pt']*np.sinh(event['LeadPhoton_eta'])
+    # event['LeadPhoton_E']=np.sqrt(np.array(leadpho_px)*np.array(leadpho_px)+np.array(leadpho_py)*np.array(leadpho_py)+np.array(leadpho_pz)*np.array(leadpho_pz)-event['LeadPhoton_mass']*event['LeadPhoton_mass'])
+    event['LeadPhoton_sigEoverE']=event['LeadPhoton_energyErr']/event['LeadPhoton_E']
+    subleadphoton=vector.obj(pt=event.SubleadPhoton_pt,eta=event.SubleadPhoton_eta,phi=event.SubleadPhoton_phi,mass=event.SubleadPhoton_mass)
+    event['SubleadPhoton_E']=subleadphoton.E
+    # subleadpho_px=event['SubleadPhoton_pt']*np.cos(event['SubleadPhoton_phi'])
+    # subleadpho_py=event['SubleadPhoton_pt']*np.sin(event['SubleadPhoton_phi'])
+    # subleadpho_pz=event['SubleadPhoton_pt']*np.sinh(event['SubleadPhoton_eta'])
+    # event['SubleadPhoton_E']=np.sqrt(np.array(subleadpho_px)*np.array(subleadpho_px)+np.array(subleadpho_py)*np.array(subleadpho_py)+np.array(subleadpho_pz)*np.array(subleadpho_pz)-event['SubleadPhoton_mass']*event['SubleadPhoton_mass'])
+    event['SubleadPhoton_sigEoverE']=event['SubleadPhoton_energyErr']/event['SubleadPhoton_E']
+    event['Diphoton_mass_resolution']=0.5*np.sqrt(event['LeadPhoton_sigEoverE']**2+event['SubleadPhoton_sigEoverE']**2)
     return event
 def calculate_bscore(event):
     nparr=np.array(event.jet_1_btagDeepFlavB)
@@ -204,19 +207,6 @@ def getCosThetaStar_CS(objects1,objects2):
     p=np.sqrt(obj1.px*obj1.px+obj1.py*obj1.py+obj1.pz*obj1.pz)
 
     return ak.flatten(abs(obj1.pz/p))
-def E_resolution(event):
-    leadpho_px=event['LeadPhoton_pt']*np.cos(event['LeadPhoton_phi'])
-    leadpho_py=event['LeadPhoton_pt']*np.sin(event['LeadPhoton_phi'])
-    leadpho_pz=event['LeadPhoton_pt']*np.sinh(event['LeadPhoton_eta'])
-    event['LeadPhoton_E']=np.sqrt(np.array(leadpho_px)*np.array(leadpho_px)+np.array(leadpho_py)*np.array(leadpho_py)+np.array(leadpho_pz)*np.array(leadpho_pz)-event['LeadPhoton_mass']*event['LeadPhoton_mass'])
-    event['LeadPhoton_sigEoverE']=event['LeadPhoton_energyErr']/event['LeadPhoton_E']
-
-    subleadpho_px=event['SubleadPhoton_pt']*np.cos(event['SubleadPhoton_phi'])
-    subleadpho_py=event['SubleadPhoton_pt']*np.sin(event['SubleadPhoton_phi'])
-    subleadpho_pz=event['SubleadPhoton_pt']*np.sinh(event['SubleadPhoton_eta'])
-    event['SubleadPhoton_E']=np.sqrt(np.array(subleadpho_px)*np.array(subleadpho_px)+np.array(subleadpho_py)*np.array(subleadpho_py)+np.array(subleadpho_pz)*np.array(subleadpho_pz)-event['SubleadPhoton_mass']*event['SubleadPhoton_mass'])
-    event['SubleadPhoton_sigEoverE']=event['SubleadPhoton_energyErr']/event['SubleadPhoton_E']
-    return event
 def getCosThetaStar(event):
     objects1=ak.zip({
     "pt":event['Diphoton_pt'],
@@ -235,10 +225,6 @@ def getCosThetaStar(event):
     # event['costhetastar']=vz
     p= np.sqrt(HH.px**2 + HH.py**2 + HH.pz**2)
     event['costhetastar']=HH.pz/p
-    dummy = ak.zeros_like(objects1.pt)
-    dummy = ak.ones_like(ak.fill_none(dummy, 0))
-    event['costhetastar']=ak.where((objects2.pt<0),(ak.ones_like(dummy)*(-1)),event['costhetastar'])
-
     return event
 def calculate_dR_gg_4jets(event):
     jet_pt=ak.concatenate([np.reshape(ak.to_numpy(event['jet_1_pt']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_2_pt']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_3_pt']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_4_pt']),(len(event),1))],axis=1)
@@ -254,31 +240,78 @@ def calculate_dR_gg_4jets(event):
     lead_pho_jet_dr=ak.flatten(Jet.deltaR(lead_photon))
     sublead_pho_jet_dr=ak.flatten(Jet.deltaR(sublead_photon))
     diphoton_jetdR=ak.concatenate([lead_pho_jet_dr,sublead_pho_jet_dr],axis=1)
-    dummy = ak.zeros_like(Leadphoton.pt)
-    dummy = ak.ones_like(ak.fill_none(dummy, 0))
-    diphoton_jetdR=ak.where((diphoton_jetdR>10),dummy,diphoton_jetdR)
+    # dummy = ak.zeros_like(Leadphoton.pt)
+    # dummy = ak.ones_like(ak.fill_none(dummy, 0))
+    # diphoton_jetdR=ak.where((diphoton_jetdR>10),dummy,diphoton_jetdR)
     event['maxdR_gg_4jets']=diphoton_jetdR[ak.argsort(diphoton_jetdR)][:,7]
-    jjggdRnoNAN=ak.fill_none(ak.pad_none(diphoton_jetdR[diphoton_jetdR!=-1],1),-1)
-    event['mindR_gg_4jets']=jjggdRnoNAN[ak.argsort(jjggdRnoNAN)][:,0]
+    event['mindR_gg_4jets']=diphoton_jetdR[ak.argsort(diphoton_jetdR)][:,0]
+    # jjggdRnoNAN=ak.fill_none(ak.pad_none(diphoton_jetdR[diphoton_jetdR!=-1],1),-1)
+    # event['mindR_gg_4jets']=jjggdRnoNAN[ak.argsort(jjggdRnoNAN)][:,0]
+    return event
+def calculate_dR_gg_3jets(event):
+    jet_pt=ak.concatenate([np.reshape(ak.to_numpy(event['jet_1_pt']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_2_pt']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_3_pt']),(len(event),1))],axis=1)
+    jet_eta=ak.concatenate([np.reshape(ak.to_numpy(event['jet_1_eta']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_2_eta']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_3_eta']),(len(event),1))],axis=1)
+    jet_phi=ak.concatenate([np.reshape(ak.to_numpy(event['jet_1_phi']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_2_phi']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_3_phi']),(len(event),1))],axis=1)
+    jet_mass=ak.concatenate([np.reshape(ak.to_numpy(event['jet_1_mass']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_2_mass']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_3_mass']),(len(event),1))],axis=1)
+    jet=ak.zip({"pt":jet_pt,"eta":jet_eta,"phi":jet_phi,"mass":jet_mass},with_name="Momentum4D")
+    Leadphoton=ak.zip({"pt":event['LeadPhoton_pt'],"eta":event['LeadPhoton_eta'],"phi":event['LeadPhoton_phi'],"mass":event['LeadPhoton_mass']},with_name="Momentum4D")
+    SubleadPhoton=ak.zip({"pt":event['SubleadPhoton_pt'],"eta":event['SubleadPhoton_eta'],"phi":event['SubleadPhoton_phi'],"mass":event['SubleadPhoton_mass']},with_name="Momentum4D")
+    Jet = ak.unflatten(jet, counts = 1) # shape [n_events, n_obj, 1]
+    lead_photon = ak.unflatten(Leadphoton, counts = 1)  # shape [n_events, 1, n_obj]
+    sublead_photon = ak.unflatten(SubleadPhoton, counts = 1)  # shape [n_events, 1, n_obj]
+    lead_pho_jet_dr=ak.flatten(Jet.deltaR(lead_photon))
+    sublead_pho_jet_dr=ak.flatten(Jet.deltaR(sublead_photon))
+    diphoton_jetdR=ak.concatenate([lead_pho_jet_dr,sublead_pho_jet_dr],axis=1)
+    event['maxdR_gg_3jets']=diphoton_jetdR[ak.argsort(diphoton_jetdR)][:,5]
+    event['mindR_gg_3jets']=diphoton_jetdR[ak.argsort(diphoton_jetdR)][:,0]
+    return event
+def calculate_dR_gg_2jets(event):
+    jet_pt=ak.concatenate([np.reshape(ak.to_numpy(event['jet_1_pt']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_2_pt']),(len(event),1))],axis=1)
+    jet_eta=ak.concatenate([np.reshape(ak.to_numpy(event['jet_1_eta']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_2_eta']),(len(event),1))],axis=1)
+    jet_phi=ak.concatenate([np.reshape(ak.to_numpy(event['jet_1_phi']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_2_phi']),(len(event),1))],axis=1)
+    jet_mass=ak.concatenate([np.reshape(ak.to_numpy(event['jet_1_mass']),(len(event),1)),np.reshape(ak.to_numpy(event['jet_2_mass']),(len(event),1))],axis=1)
+    jet=ak.zip({"pt":jet_pt,"eta":jet_eta,"phi":jet_phi,"mass":jet_mass},with_name="Momentum4D")
+    Leadphoton=ak.zip({"pt":event['LeadPhoton_pt'],"eta":event['LeadPhoton_eta'],"phi":event['LeadPhoton_phi'],"mass":event['LeadPhoton_mass']},with_name="Momentum4D")
+    SubleadPhoton=ak.zip({"pt":event['SubleadPhoton_pt'],"eta":event['SubleadPhoton_eta'],"phi":event['SubleadPhoton_phi'],"mass":event['SubleadPhoton_mass']},with_name="Momentum4D")
+    Jet = ak.unflatten(jet, counts = 1) # shape [n_events, n_obj, 1]
+    lead_photon = ak.unflatten(Leadphoton, counts = 1)  # shape [n_events, 1, n_obj]
+    sublead_photon = ak.unflatten(SubleadPhoton, counts = 1)  # shape [n_events, 1, n_obj]
+    lead_pho_jet_dr=ak.flatten(Jet.deltaR(lead_photon))
+    sublead_pho_jet_dr=ak.flatten(Jet.deltaR(sublead_photon))
+    diphoton_jetdR=ak.concatenate([lead_pho_jet_dr,sublead_pho_jet_dr],axis=1)
+    event['maxdR_gg_2jets']=diphoton_jetdR[ak.argsort(diphoton_jetdR)][:,3]
+    event['mindR_gg_2jets']=diphoton_jetdR[ak.argsort(diphoton_jetdR)][:,0]
     return event
 def calculate_dR_4jets(event):
     jet1=ak.zip({"pt":event.jet_1_pt,"eta":event.jet_1_eta,"phi":event.jet_1_phi,"phi":event.jet_1_phi},with_name="Momentum4D")
     jet2=ak.zip({"pt":event.jet_2_pt,"eta":event.jet_2_eta,"phi":event.jet_2_phi,"phi":event.jet_2_phi},with_name="Momentum4D")
     jet3=ak.zip({"pt":event.jet_3_pt,"eta":event.jet_3_eta,"phi":event.jet_3_phi,"phi":event.jet_3_phi},with_name="Momentum4D")
     jet4=ak.zip({"pt":event.jet_4_pt,"eta":event.jet_4_eta,"phi":event.jet_4_phi,"phi":event.jet_4_phi},with_name="Momentum4D")
-    dummy = ak.zeros_like(jet1.pt)
-    dummy = ak.ones_like(ak.fill_none(dummy, 0))
-    j1j2dr=ak.unflatten(ak.where(((jet1.pt<0)|(jet2.pt<0)),(ak.ones_like(dummy)*(-1)),jet1.deltaR(jet2)),counts=1)
-    j1j3dr=ak.unflatten(ak.where(((jet1.pt<0)|(jet3.pt<0)),(ak.ones_like(dummy)*(-1)),jet1.deltaR(jet3)),counts=1)
-    j1j4dr=ak.unflatten(ak.where(((jet1.pt<0)|(jet4.pt<0)),(ak.ones_like(dummy)*(-1)),jet1.deltaR(jet4)),counts=1)
-    j2j3dr=ak.unflatten(ak.where(((jet2.pt<0)|(jet3.pt<0)),(ak.ones_like(dummy)*(-1)),jet2.deltaR(jet3)),counts=1)
-    j2j4dr=ak.unflatten(ak.where(((jet2.pt<0)|(jet4.pt<0)),(ak.ones_like(dummy)*(-1)),jet2.deltaR(jet4)),counts=1)
-    j3j4dr=ak.unflatten(ak.where(((jet3.pt<0)|(jet4.pt<0)),(ak.ones_like(dummy)*(-1)),jet3.deltaR(jet4)),counts=1)
-
+    j1j2dr=ak.unflatten(jet1.deltaR(jet2),counts=1)
+    j1j3dr=ak.unflatten(jet1.deltaR(jet3),counts=1)
+    j1j4dr=ak.unflatten(jet1.deltaR(jet4),counts=1)
+    j2j3dr=ak.unflatten(jet2.deltaR(jet3),counts=1)
+    j2j4dr=ak.unflatten(jet2.deltaR(jet4),counts=1)
+    j3j4dr=ak.unflatten(jet3.deltaR(jet4),counts=1)
     jjdR=ak.concatenate([j1j2dr,j1j3dr,j1j4dr,j2j3dr,j2j4dr,j3j4dr],axis=1)
     event['maxdR_4jets']=jjdR[ak.argsort(jjdR)][:,5]
-    jjdRnoNAN=ak.fill_none(ak.pad_none(jjdR[jjdR!=-1],1),-1)
-    event['mindR_4jets']=jjdRnoNAN[ak.argsort(jjdRnoNAN)][:,0]
+    event['mindR_4jets']=jjdR[ak.argsort(jjdR)][:,0]
+    return event
+def calculate_dR_3jets(event):
+    jet1=ak.zip({"pt":event.jet_1_pt,"eta":event.jet_1_eta,"phi":event.jet_1_phi,"phi":event.jet_1_phi},with_name="Momentum4D")
+    jet2=ak.zip({"pt":event.jet_2_pt,"eta":event.jet_2_eta,"phi":event.jet_2_phi,"phi":event.jet_2_phi},with_name="Momentum4D")
+    jet3=ak.zip({"pt":event.jet_3_pt,"eta":event.jet_3_eta,"phi":event.jet_3_phi,"phi":event.jet_3_phi},with_name="Momentum4D")
+    j1j2dr=ak.unflatten(jet1.deltaR(jet2),counts=1)
+    j1j3dr=ak.unflatten(jet1.deltaR(jet3),counts=1)
+    j2j3dr=ak.unflatten(jet2.deltaR(jet3),counts=1)
+    jjdR=ak.concatenate([j1j2dr,j1j3dr,j2j3dr],axis=1)
+    event['maxdR_3jets']=jjdR[ak.argsort(jjdR)][:,2]
+    event['mindR_3jets']=jjdR[ak.argsort(jjdR)][:,0]
+    return event
+def calculate_dR_2jets(event):
+    jet1=ak.zip({"pt":event.jet_1_pt,"eta":event.jet_1_eta,"phi":event.jet_1_phi,"phi":event.jet_1_phi},with_name="Momentum4D")
+    jet2=ak.zip({"pt":event.jet_2_pt,"eta":event.jet_2_eta,"phi":event.jet_2_phi,"phi":event.jet_2_phi},with_name="Momentum4D")
+    event['dR_j1j2']=jet1.deltaR(jet2)
     return event
 def add_sale_factor(event,sclae_factor):
     event['weight_central']=sclae_factor*event.weight_central
@@ -333,10 +366,6 @@ def costheta1(event):
     # The dot product of two unit vectors is equal to cos theta
     cos_theta = ux1 * ux2 + uy1 * uy2 + uz1 * uz2
     event['costheta1']=cos_theta
-    dummy = ak.zeros_like(W1.pt)
-    dummy = ak.ones_like(ak.fill_none(dummy, 0))
-    event['costheta1']=ak.where(((H1.pt<0)|(H2.pt<0)|(W1.pt<0)),(ak.ones_like(dummy)*(-1)),event['costheta1'])
-
     return event
 def costheta2(event):
     W2=ak.zip({
@@ -373,9 +402,6 @@ def costheta2(event):
     # The dot product of two unit vectors is equal to cos theta
     cos_theta = ux1 * ux2 + uy1 * uy2 + uz1 * uz2
     event['costheta2']=cos_theta
-    dummy = ak.zeros_like(W2.pt)
-    dummy = ak.ones_like(ak.fill_none(dummy, 0))
-    event['costheta2']=ak.where(((H1.pt<0)|(H2.pt<0)|(W2.pt<0)),(ak.ones_like(dummy)*(-1)),event['costheta2'])
     return event
 def calculate_sphericity(event):
     sphericity_list=[]
@@ -418,31 +444,6 @@ def calculate_photon_info(event):
     event['LeadPhoton_E_over_mass']=leadphoton.E/event.Diphoton_mass
     event['SubleadPhoton_E_over_mass']=subleadphoton.E/event.Diphoton_mass
     return event
-def calculate_Wjj(event):
-    leadjet=vector.obj(pt=event.jet_1_pt,eta=event.jet_1_eta,phi=event.jet_1_phi,mass=event.jet_1_mass)
-    event['jet_1_E']=np.nan_to_num(leadjet.E, nan=-1)
-
-    subleadjet=vector.obj(pt=event.jet_2_pt,eta=event.jet_2_eta,phi=event.jet_2_phi,mass=event.jet_2_mass)
-    event['jet_2_E']=np.nan_to_num(subleadjet.E, nan=-1)
-    dummy = ak.zeros_like(leadjet.pt)
-    dummy = ak.ones_like(ak.fill_none(dummy, 0))
-    event['jet_2_E']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_2_E'])
-    event['jet_2_pt']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_2_pt'])
-    event['jet_2_eta']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_2_eta'])
-    event['jet_2_phi']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_2_phi'])
-    event['jet_2_mass']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_2_mass'])
-    W1=leadjet+subleadjet
-    event['W1_pt']=W1.pt
-    event['W1_eta']=W1.eta
-    event['W1_phi']=W1.phi
-    event['W1_mass']=W1.mass
-    event['W1_E']=np.nan_to_num(W1.E, nan=-1)
-    event['W1_pt']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W1_pt'])
-    event['W1_eta']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W1_eta'])
-    event['W1_phi']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W1_phi'])
-    event['W1_mass']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W1_mass'])
-    event['W1_E']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W1_E'])
-    return event
 def lepton(event):
     lepton_pt=ak.concatenate([ak.unflatten(event.electron_iso_pt,counts=1),ak.unflatten(event.muon_iso_pt,counts=1)],axis=1)
     lepton_eta=ak.concatenate([ak.unflatten(event.electron_iso_eta,counts=1),ak.unflatten(event.muon_iso_eta,counts=1)],axis=1)
@@ -471,58 +472,89 @@ def electron(event):
     event['electron_iso_MET_mt']=np.sqrt(electron.mass*electron.mass+2*(event.electron_iso_Et*event.MET_pt-electron.pt*event.MET_pt))
     return event
 ####FH DNN
-# inputfile=['/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-250_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-300_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-400_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-550_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-650_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-750_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-900_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/data/merged_nominal.parquet']
+inputfile=['/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-250_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-260_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-270_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-280_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-300_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-320_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-350_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-400_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-450_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-550_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-600_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-650_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-700_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-750_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-850_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-900_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-1000_2017/merged_nominal.parquet']
+outputfile_FH_2jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH250.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH260.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH270.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH280.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH300.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH320.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH350.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH400.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH450.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH550.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH600.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH650.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH700.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH750.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH850.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH900.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/FH1000.parquet']
+outputfile_FH_3jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH250.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH260.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH270.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH280.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH300.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH320.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH350.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH400.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH450.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH550.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH600.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH650.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH700.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH750.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH850.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH900.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/FH1000.parquet']
+outputfile_FH_4jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH250.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH260.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH270.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH280.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH300.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH320.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH350.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH400.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH450.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH550.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH600.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH650.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH700.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH750.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH850.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH900.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/FH1000.parquet']
 # outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/FH250.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH300.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH400.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH550.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH650.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH750.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH900.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Data_2017.parquet']
-inputfile=['/eos/user/s/shsong/HHWWgg/parquet/data_WMD/merged_nominal.parquet']
-outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/Data_2017.parquet']
-outputfile_SL=['/eos/user/s/shsong/HHWWgg/parquet/cat2/Data_2017.parquet']
+# inputfile=['/eos/user/s/shsong/HHWWgg/parquet/data_WMD/merged_nominal.parquet']
+# outputfile_FH_2jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/Data_2017.parquet']
+# outputfile_FH_3jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/Data_2017.parquet']
+# outputfile_FH_4jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/Data_2017.parquet']
 
 # inputfile=['/eos/user/s/shsong/HHWWgg/parquet/bkg/fakephoton/UL17_DiPhotonJetsBox_M40_80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/fakephoton/UL17_DiPhotonJetsBox_MGG_80toInf_2017/pp1.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/fakephoton/UL17_DiPhotonJetsBox_MGG_80toInf_2017/pp2.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/fakephoton/UL17_GJet_Pt_20to40_DoubleEMEnriched_MGG_80toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/fakephoton/UL17_GJet_Pt_20toInf_DoubleEMEnriched_MGG_40to80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/fakephoton/UL17_GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_2017/merged_nominal.parquet']
-# outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/DiPhotonJetsBox_MGG_80toInf_20171.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/DiPhotonJetsBox_MGG_80toInf_20172.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Gjet_Pt20_40_2017.parquet']
+# outputfile_FH_2jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/DiPhotonJetsBox_MGG_80toInf_20171.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/DiPhotonJetsBox_MGG_80toInf_20172.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/Gjet_Pt20_40_2017.parquet']
+# outputfile_FH_3jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/DiPhotonJetsBox_MGG_80toInf_20171.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/DiPhotonJetsBox_MGG_80toInf_20172.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/Gjet_Pt20_40_2017.parquet']
+# outputfile_FH_4jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/DiPhotonJetsBox_MGG_80toInf_20171.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/DiPhotonJetsBox_MGG_80toInf_20172.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/Gjet_Pt20_40_2017.parquet']
+
 # outputfile_SL=['/eos/user/s/shsong/HHWWgg/parquet/cat2/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/DiPhotonJetsBox_MGG_80toInf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Gjet_Pt20_40_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Data_2017.parquet']
 # inputfile=['/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_WWG_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_W1JetsToLNu_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_W2JetsToLNu_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_W3JetsToLNu_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_W4JetsToLNu_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_WWTo1L1Nu2Q_4f_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/WJetsToQQ_HT-200to400_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/WJetsToQQ_HT-600to800_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/WJetsToQQ_HT-400to600_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/WJetsToQQ_HT-800toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/TTbar/UL17_TTGG_0Jets/UL17_TTGG_0Jets_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/TTbar/UL17_TTGJets/UL17_TTGJets_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/TTbar/UL17_TTJets/UL17_TTJets_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/TTbar/UL17_ttWJets/UL17_ttWJets_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/QCD/UL17_QCD_Pt-30to40_MGG-80toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/QCD/UL17_QCD_Pt-30toInf_MGG-40to80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/QCD/UL17_QCD_Pt-40ToInf_MGG-80ToInf_2017/merged_nominal.parquet']
 # outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/WWG.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/W1JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/W2JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/W3JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/W4JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WWTo1L1Nu2Q.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WJetsToQQ200to400.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WJetsToQQ600to800.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WJetsToQQ400to600.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WJetsToQQ800toInf.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/TTGG_0Jets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/TTGJets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/TTJets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/ttWJets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/QCDpt30To40.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/QCDpt30ToInf.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/QCDpt40ToInf.parquet']
 
 # outputfile_SL=['/eos/user/s/shsong/HHWWgg/parquet/cat2/WWG.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/W1JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/W2JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/W3JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/W4JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/WWTo1L1Nu2Q.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/WJetsToQQ200to400.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/WJetsToQQ600to800.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/WJetsToQQ400to600.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/WJetsToQQ800toInf.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/TTGG_0Jets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/TTGJets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/TTJets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/ttWJets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/QCDpt30To40.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/QCDpt30ToInf.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/QCDpt40ToInf.parquet']
 i=0
+type=sys.argv[1]
 for file in inputfile:
-    eventSL, eventFH=load_parquet(file)
+    eventsSL,eventsFH,eventsFH_2jet,eventsFH_3jet,eventsFH_4jet=load_parquet(file)
     print("Got event")
-    eventFH=calclulate_W_info(eventFH)
-    print('Got W info')
-    eventFH=scaled_diphoton_info(eventFH)
+    eventFH_4jet=calclulate_WW_info(eventsFH_4jet)
+    print('Got WW info')
+    eventFH_3jet=calculate_W3j_info(eventsFH_3jet)
+    print('Got W3j info')
+    eventFH_2jet=calculate_Wjj(eventsFH_2jet)
+    print('Got Wjj info')
+    eventFH_4jet=scaled_diphoton_info(eventFH_4jet)
+    eventFH_3jet=scaled_diphoton_info(eventFH_3jet)
+    eventFH_2jet=scaled_diphoton_info(eventFH_2jet)
     print('Got scaled_diphoton info')
-    eventFH=E_resolution(eventFH)
-    print('Got E resolution')
-    eventFH=calculate_bscore(eventFH)
+    eventFH_4jet=Diphoton_E_mass_resolution(eventFH_4jet)
+    eventFH_3jet=Diphoton_E_mass_resolution(eventFH_3jet)
+    eventFH_2jet=Diphoton_E_mass_resolution(eventFH_2jet)
+    print('Got resolution')
+    eventFH_4jet=calculate_bscore(eventFH_4jet)
+    eventFH_3jet=calculate_bscore(eventFH_3jet)
+    eventFH_2jet=calculate_bscore(eventFH_2jet)
     print('Got b score')
-    eventFH=getCosThetaStar(eventFH)
+    eventFH_4jet=getCosThetaStar(eventFH_4jet)
     print('Got getCosThetaStar')
-    eventFH=calculate_dR_gg_4jets(eventFH)
+    eventFH_4jet=calculate_dR_gg_4jets(eventFH_4jet)
     print('Got dr gg 4jets')
-    eventFH=calculate_dR_4jets(eventFH)
+    eventFH_3jet=calculate_dR_gg_3jets(eventFH_3jet)
+    print('Got dr gg 3jets')
+    eventFH_2jet=calculate_dR_gg_2jets(eventFH_2jet)
+    print('Got dr gg 2jets')
+    eventFH_4jet=calculate_dR_4jets(eventFH_4jet)
     print('Got dr 4jets')
-
-    eventFH=costheta1(eventFH)
+    eventFH_3jet=calculate_dR_3jets(eventFH_3jet)
+    print('Got dr 3jets')
+    eventFH_2jet=calculate_dR_2jets(eventFH_2jet)
+    print('Got dr 2jets')
+    eventFH_4jet=costheta1(eventFH_4jet)
     print('Got CosTheta1')
-    eventFH=costheta2(eventFH)
+    eventFH_4jet=costheta2(eventFH_4jet)
     print('Got CosTheta2')
-    # eventFH=get_minmaxID(eventFH)
-    print('Got get_minmaxID')
+    if type=='MC':
+        eventFH_4jet=get_minmaxID(eventFH_4jet)
+        eventFH_3jet=get_minmaxID(eventFH_3jet)
+        eventFH_2jet=get_minmaxID(eventFH_2jet)
+        print('Got get_minmaxID')
+
     # eventFH=calculate_sphericity(eventFH)
     # print('Got sphericity')
 
     # event=add_sale_factor(event,scalefactor[i])
 
-    ak.to_parquet(eventFH, outputfile_FH[i])
-
+    ak.to_parquet(eventFH_2jet, outputfile_FH_2jet[i])
+    ak.to_parquet(eventFH_3jet, outputfile_FH_3jet[i])
+    ak.to_parquet(eventFH_4jet, outputfile_FH_4jet[i])
+    print("writing parquet files done")
     # eventSL=split_electron_category(eventSL)
     # print('Got electron event')
     # eventSL=calculate_Wjj(eventSL)
     # print('Got W info')
     # eventSL=calculate_photon_info(eventSL)
     # print('Got photon info')
-    # eventSL=E_resolution(eventSL)
+    # eventSL=Diphoton_E_mass_resolution(eventSL)
     # print('Got E resolution')
     # eventSL=electron(eventSL)
     # print('Got electron info')
@@ -530,7 +562,10 @@ for file in inputfile:
     # print('Got get_minmaxID')
     # ak.to_parquet(eventSL, outputfile_SL[i])
     # parquet_to_root(outputfile_SL[i],outputfile_SL[i].replace("parquet","root"),treename="cat2",verbose=False)
-    parquet_to_root(outputfile_FH[i],outputfile_FH[i].replace("parquet","root"),treename="cat7",verbose=False)
+    parquet_to_root(outputfile_FH_2jet[i],outputfile_FH_2jet[i].replace("parquet","root"),treename="cat7",verbose=False)
+    parquet_to_root(outputfile_FH_3jet[i],outputfile_FH_3jet[i].replace("parquet","root"),treename="cat7",verbose=False)
+    parquet_to_root(outputfile_FH_4jet[i],outputfile_FH_4jet[i].replace("parquet","root"),treename="cat7",verbose=False)
+    print("writing root files done")
     i=i+1
 
 
