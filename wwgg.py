@@ -41,49 +41,6 @@ def load_trained_model(model_path):
 def clearVar(var):
     del var
     gc.collect()
-def readDF(f,processID,isBkg:bool):
-    df=pd.read_parquet(f)
-
-    # df=df.query("jet_1_btagDeepFlavB<=0.3093&jet_2_btagDeepFlavB<=0.3093")
-   
-    if(isBkg):
-        # mass = [250, 260, 270, 280, 300, 320, 350, 400, 450,550, 600, 650, 700, 750, 800, 850, 900, 1000]
-        mass = [250, 300, 400, 450,550, 650, 750, 900]
-        random_mass = random.choices(mass, k=len(df))
-        df["target"]=0
-        df["weight"]=df["weight_central"]
-        df['Signal_Mass']=random_mass
-    else:
-        mx = re.search("m(\d+)", f)
-        df["target"]=1
-        df['Signal_Mass']=int(mx.group(1))
-        df["weight"]=df["weight_central"]
-
-
-    df["processID"]=processID
-    # print("file name is:",f.split("/")[-1],"number of events:",df.shape[0],"weighted events:",df.weight.sum())
-    return df
-def getClassWeight(df):
-    #normalize signal to backgroud
-    # background target == 0; sig target ==1
-    bkg_yields=df.groupby("target")["weight"].sum()[0]
-    sig_yields=df.groupby("target")["weight"].sum()[1]
-    N_bkg=df.query("target==0").shape[0]
-    N=bkg_yields
-    norm_bkg=N/bkg_yields
-    norm_sig=N/sig_yields
-    # norm=sig_yields/bkg_yields
-    df["class_weight"]=df["target"].map({0:norm_bkg, 1:norm_sig})
-    df["new_weight"]= df["class_weight"]* df["weight"]
-
-    print("original wighted events:",bkg_yields,sig_yields)
-    print("new weight:",df.groupby("target")["new_weight"].sum())
-    return df,norm_bkg,norm_sig
-def getMX(filename):
-    mx = re.search("m(\d+)", filename)
-    if mx:
-        mx = mx.group(1)
-    return "Signal_M"+str(mx)+"_point"
 def baseline_model(num_variables,learn_rate=0.000000001):
     model = Sequential()
     # model.add(tf.keras.layers.Dense(64,input_dim=num_variables,kernel_initializer='glorot_normal',activation='relu'))
@@ -159,13 +116,14 @@ def scheduler(epoch):
 
 allFeatures = ["Diphoton_dR"]
 
-training_columns=["new_weight","type","Diphoton_mass","Diphoton_pt","scaled_leadphoton_pt","scaled_subleadphoton_pt","WW_pt","W1_mass","WW_mass","maxdR_gg_4jets","mindR_4jets","W2_mass","jet_1_pt","jet_2_pt","jet_4_pt","jet_4_E","jet_3_E","jet_2_E","jet_1_E","jet_3_pt","sum_two_max_bscore","LeadPhoton_eta","SubleadPhoton_eta","W1_pt","W2_pt","jet_1_eta","jet_2_eta","jet_3_eta","jet_4_eta","costhetastar","LeadPhoton_sigEoverE","SubleadPhoton_sigEoverE","Diphoton_minID","Diphoton_maxID","nGoodAK4jets","costheta1","costheta2","Signal_Mass"]
+# training_columns=["new_weight","type","Diphoton_mass","Diphoton_pt","scaled_leadphoton_pt","scaled_subleadphoton_pt","WW_pt","W1_mass","WW_mass","maxdR_gg_4jets","mindR_4jets","W2_mass","jet_1_pt","jet_2_pt","jet_4_pt","jet_4_E","jet_3_E","jet_2_E","jet_1_E","jet_3_pt","sum_two_max_bscore","LeadPhoton_eta","SubleadPhoton_eta","W1_pt","W2_pt","jet_1_eta","jet_2_eta","jet_3_eta","jet_4_eta","costhetastar","LeadPhoton_sigEoverE","SubleadPhoton_sigEoverE","Diphoton_minID","Diphoton_maxID","nGoodAK4jets","costheta1","costheta2","Signal_Mass"]
+training_columns=["new_weight","type","Diphoton_mass","Diphoton_pt","Diphoton_eta","Diphoton_phi","scaled_leadphoton_pt","scaled_subleadphoton_pt","Diphoton_minID","Diphoton_maxID","LeadPhoton_eta","SubleadPhoton_eta","LeadPhoton_sigEoverE","SubleadPhoton_sigEoverE","WW_E","WW_pt","WW_mass","WW_eta","WW_phi","W1_mass","W1_pt","W1_eta","W1_phi","W1_E","W2_mass","W2_pt","maxdR_gg_4jets","mindR_gg_4jets","maxdR_4jets","mindR_4jets","jet_1_pt","jet_1_E","jet_1_eta","jet_1_phi","jet_1_btagDeepFlavB","jet_2_pt","jet_2_E","jet_2_eta","jet_2_phi","jet_2_btagDeepFlavB","jet_3_pt","jet_3_E","jet_3_eta","jet_3_phi","jet_3_btagDeepFlavB","jet_4_pt","jet_4_E","jet_4_eta","jet_4_phi","jet_4_btagDeepFlavB","sum_two_max_bscore","costhetastar","nGoodAK4jets","costheta1","costheta2","Signal_Mass"]
 
-data_set=pd.read_csv('/hpcfs/cms/cmsgpu/shaoweisong/input/cat7/dnn_new.csv',index_col=0)
+data_set=pd.read_csv('/hpcfs/cms/cmsgpu/shaoweisong/input/cat7/dnn_massresolutionreweighted.csv',index_col=0)
 
 
 train_model=True
-epochs=3
+epochs=50
 gridSearch=False
 useXGB=False
 compute_importance=True
@@ -220,7 +178,7 @@ for feature in allFeatures:
     ax.set_title('Train Diphoton mass')
     ax.set_xlabel('Diphoton mass')
     ax.legend()
-    plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/training_Diphotonmass.png")
+    plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/training_Diphotonmass.png")
     plt.show()
     
     testqcd = X_test[testtype == 1]
@@ -249,7 +207,7 @@ for feature in allFeatures:
     ax.set_title('Test Diphoton mass')
     ax.set_xlabel('Diphoton mass')
     ax.legend()
-    plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/test_Diphotonmass.png")
+    plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/test_Diphotonmass.png")
     plt.show()
 
  
@@ -265,11 +223,10 @@ for feature in allFeatures:
     testcsv=pd.DataFrame(X_test_scaled)
     print("len Xtrain scale",len(X_train_scaled))
     print("len Xtest scale",len(X_test_scaled))
-    traincsv.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/input/cat7/qcd/train_scaled.csv')
-    testcsv.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/input/cat7/qcd/test_scaled.csv')
-    # traincsv=pd.read_csv('/hpcfs/cms/cmsgpu/shaoweisong/input/cat7/train_scaled.csv',index_col=0)
-    # testcsv=pd.read_csv('/hpcfs/cms/cmsgpu/shaoweisong/input/cat7/test_scaled.csv',index_col=0)
-    with open('/hpcfs/cms/cmsgpu/shaoweisong/input/cat7/qcd/scaler.pkl','wb') as f:
+    traincsv.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/train_scaled.csv')
+    testcsv.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/test_scaled.csv')
+
+    with open('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/scaler.pkl','wb') as f:
         pickle.dump(scaler,f)
 
     if (useXGB):
@@ -297,7 +254,7 @@ for feature in allFeatures:
         'silent': 1
             }
             model = xgb.train(params, dtrain, num_boost_round=100)
-            model.save_model("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7/model_%s.xgb"%(name))
+            model.save_model("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/model_%s.xgb"%(name))
             gv = xgb.to_graphviz(model)
             gv.render("xgb-structure_%s"%(name), format="pdf")
             gv.render("xgb-structure_%s"%(name), format="png")
@@ -320,18 +277,18 @@ for feature in allFeatures:
                 # history=model.fit(X_train_scaled,y_train,validation_split=0.2,epochs=epochs,batch_size=200,verbose=2,shuffle=False,sample_weight=trainingweights,class_weight={0:norm_bkg,1:norm_sig},callbacks=[early_stopping_monitor])
                 history=model.fit(X_train_scaled,y_train,validation_split=0.2,epochs=epochs,batch_size=500,verbose=2,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,lr_callback])
                 # history=model.fit(X_train_scaled,y_train,validation_split=0.2,epochs=epochs,batch_size=200,verbose=2,shuffle=True,callbacks=[early_stopping_monitor])
-                model.save("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/model_%s.h5"%(name))
+                model.save("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/model_%s.h5"%(name))
                 print(type(history.history["loss"]))
                 history_dict = {"loss":history.history["loss"],"val_loss":history.history["val_loss"]}
 
                 print(history_dict)
                 print(type(history_dict))
-                with open("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/history_%s.json"%name, "w") as f:
+                with open("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/history_%s.json"%name, "w") as f:
                     json.dump(history_dict, f)
 
     else:
         print("Start predict")
-        model=load_trained_model("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/model_%s.h5"%name)
+        model=load_trained_model("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/model_%s.h5"%name)
 
 
 
@@ -389,173 +346,123 @@ for feature in allFeatures:
         'auc_test':roc_auc_test.tolist(),
     }
 
-    with open("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/predictions_%s.json"%name, "w") as f:
+    with open("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/predictions_%s.json"%name, "w") as f:
         json.dump(roc_train, f)
     df_train=pd.DataFrame(data_train)
-    df_train.to_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/df_train_%s.csv"%name)
+    df_train.to_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/df_train_%s.csv"%name)
     df_test=pd.DataFrame(data_test)
-    df_test.to_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/df_test_%s.csv"%name)
+    df_test.to_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/df_test_%s.csv"%name)
     #plot test train predict dnn distribution
     testdnn_score=model.predict(X_test_scaled)
     testdnn_qcd=testdnn_score[testtype==1]
     testdnn_pp=testdnn_score[testtype==2]
     testdnn_sig=testdnn_score[testtype==3]
     fig, ax = plt.subplots()
-    ax.hist(testdnn_qcd, bins=40, alpha=0.5, label='QCD', stacked=True, weights=testqcd_W, range=(0, 1))
-    ax.hist(testdnn_pp, bins=40, alpha=0.5, label='DiphotonJetsbox', stacked=True, weights=testpp_W, range=(0, 1))
-    ax.hist(testdnn_sig, bins=40, alpha=0.5,label='sig', color='red', edgecolor='red', weights=testsig_W, range=(0, 1))      
+    # ax.hist([testdnn_qcd,testdnn_pp], bins=40, alpha=0.5,log=True, label=['QCD','DiphotonJetsbox'], stacked=True, weights=[testqcd_W,testpp_W], range=(0, 1))
+    ax.hist(testdnn_qcd, bins=40, alpha=0.5,log=True, label='QCD', stacked=True, weights=testqcd_W, range=(0, 1))
+    ax.hist(testdnn_pp, bins=40, alpha=0.5,log=True, label='DiphotonJetsbox', stacked=True, weights=testpp_W, range=(0, 1))
+    ax.hist(testdnn_sig, bins=40, alpha=0.5,log=True,label='sig', color='red', edgecolor='red', weights=testsig_W, range=(0, 1))      
     ax.set_title('Test DNN')
     ax.set_xlabel('DNN score')
     ax.legend()
-    plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/test_DNN.png")
+    plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/test_DNN.png")
     plt.show()  
     traindnn_score=model.predict(X_train_scaled)
     traindnn_qcd=traindnn_score[traingtype==1]
     traindnn_pp=traindnn_score[traingtype==2]
     traindnn_sig=traindnn_score[traingtype==3]
     fig, ax = plt.subplots()
-    ax.hist(traindnn_qcd, bins=40, alpha=0.5, label='QCD', stacked=True, weights=trainqcd_W, range=(0, 1))
-    ax.hist(traindnn_pp, bins=40, alpha=0.5, label='DiphotonJetsbox', stacked=True, weights=trainpp_W, range=(0, 1))
-    ax.hist(traindnn_sig, bins=40, alpha=0.5,label='sig', color='red', edgecolor='red', weights=trainsig_W, range=(0, 1))      
+    # ax.hist([traindnn_qcd,traindnn_pp], bins=40, alpha=0.5,log=True, label=['QCD','DiphotonJetsbox'], stacked=True, weights=[trainqcd_W,trainpp_W], range=(0, 1))
+    ax.hist(traindnn_qcd, bins=40, alpha=0.5,log=True, label='QCD', stacked=True, weights=trainqcd_W, range=(0, 1))
+    ax.hist(traindnn_pp, bins=40, alpha=0.5,log=True, label='DiphotonJetsbox', stacked=True, weights=trainpp_W, range=(0, 1))
+    ax.hist(traindnn_sig, bins=40, alpha=0.5,log=True,label='sig', color='red', edgecolor='red', weights=trainsig_W, range=(0, 1))      
     ax.set_title('train DNN')
     ax.set_xlabel('DNN score')
     ax.legend()
-    plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/train_DNN.png")
+    plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/train_DNN.png")
     plt.show()  
-        
-    if compute_importance:
-
-        results=[]
-        print('computing feature importance....')
-        
-        oof_preds=model.predict(X_test_scaled,verbose=0).squeeze()
-        baseline_mae = np.mean((np.abs(oof_preds-y_test))*testweights)
-        results.append({'feature':'BASELINE','mae':baseline_mae})
-
-        for k in tqdm(range(len(training_columns)-3)):
-
-            save_col = X_test_scaled[:,k].copy()
-            np.random.shuffle(X_test_scaled[:,k])
-                            
-            # COMPUTE OOF MAE WITH FEATURE K SHUFFLED
-            oof_preds = model.predict(X_test_scaled, verbose=0).squeeze() 
-            mae = np.mean(np.abs(oof_preds-y_test)*testweights)
-            results.append({'feature':training_columns[k+3],'mae':mae})
-            X_test_scaled[:,k] = save_col            
-        df = pd.DataFrame(results)
-        df = df.sort_values('mae')
-        plt.figure(figsize=(30,20))
-        plt.barh(np.arange(len(training_columns)-2),df.mae)
-        plt.yticks(np.arange(len(training_columns)-2),df.feature.values,fontsize=18)
-        plt.title(' Feature Importance',size=18)
-        plt.ylim((-1,len(training_columns)-2))
-        plt.plot([baseline_mae,baseline_mae],[-1,(len(training_columns)-2)], '--', color='orange',
-            label=f'Baseline OOF\nMAE={baseline_mae:.3f}')
-        plt.xlabel( 'OOF MAE with feature permuted',size=18)
-        plt.ylabel('Feature',size=18)
-        plt.legend()
-        
-        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/feature_2.png")
-        plt.show()
-        df = df.sort_values('mae',ascending=False)
-        df.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/feature_importance2.csv',index=False)
-
-    #draw importance for each mass point
-    # mass_list=[250, 260, 270, 280, 300, 320, 350, 400, 450,550, 600, 650, 700, 750, 800, 850, 900, 1000]
-    mass_list=[250, 300, 400, 450,550, 650, 750, 900]
-
+    mass_list = [250, 260, 270, 280, 300, 320, 350, 400, 450,550, 600, 650, 700, 750, 800,850, 900, 1000]
     con_df_test=pd.concat([testcsv,df_test],axis=1)
     con_df_train=pd.concat([traincsv,df_train],axis=1)
-    for i in mass_list:
-        results=[]
-        selection="Signal_Mass=="+str(i)
-        sig_df=con_df_test.query(selection)
-        testweights=sig_df['weights'].values
-        print("select %s events from signal%s"%(len(sig_df),i))
-        # X_test_scaled=sig_df.values[:,:35]
-        X_test_scaled=sig_df.values[:,:(len(training_columns)-3)]
-        y_test=sig_df['test_tag']
-        oof_preds_pnn=model.predict(X_test_scaled,verbose=0).squeeze()
-        baseline_mae = np.mean(np.abs(oof_preds_pnn-y_test))
-        results.append({'feature':'BASELINE','mae':baseline_mae})
-
-        # for k in tqdm(range(35)):
-        for k in tqdm(range(len(training_columns)-3)):
-
-            save_col = X_test_scaled[:,k].copy()
-            np.random.shuffle(X_test_scaled[:,k])
-            
-            # COMPUTE OOF MAE WITH FEATURE K SHUFFLED
-            oof_preds_pnn = model.predict(X_test_scaled, verbose=0).squeeze() 
-            mae = np.mean(np.abs( oof_preds_pnn-y_test ))
-            results.append({'feature':training_columns[k+1],'mae':mae})
-            X_test_scaled[:,k] = save_col 
-        df = pd.DataFrame(results)
-        df = df.sort_values('mae')
-        plt.figure(figsize=(20,18))
-        plt.barh(np.arange(len(training_columns)-2),df.mae)
-        plt.yticks(np.arange(len(training_columns)-2),df.feature.values,fontsize=18)
-        plt.xticks(fontsize=24)
-        plt.yticks(fontsize=24)
-        plt.title(' Feature Importance',size=38)
-        plt.ylim((-1,(len(training_columns)-2)))
-        plt.plot([baseline_mae,baseline_mae],[-1,(len(training_columns)-2)], '--', color='orange',
-            label=f'Baseline OOF\nMAE={baseline_mae:.3f}')
-        plt.xlabel( 'OOF MAE with feature permuted',size=28)
-        plt.ylabel('Feature',size=28)
-        plt.legend(fontsize=18)
-
-        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/sigmass"+str(i)+"feature.png")
-        plt.show()
-        df = df.sort_values('mae',ascending=False)
-        df.to_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/sigmass"+str(i)+"feature_importance.csv",index=False)   
-
-
     for i in mass_list:
         selection="Signal_Mass=="+str(i)
         sig_df_test=con_df_test.query(selection)
         sig_df_train=con_df_train.query(selection)
-        
-        testdnn_score=model.predict(sig_df_test)
-        testdnn_qcd=testdnn_score[testtype==1]
-        testdnn_pp=testdnn_score[testtype==2]
-        testdnn_sig=testdnn_score[testtype==3]
+        testdataset=testcsv[df_test['Signal_Mass']==i]
+        testtype_sig=testtype[df_test['Signal_Mass']==i]
+        df_weight=df_test[df_test['Signal_Mass']==i].weights
+        testqcd_W=df_weight[testtype_sig==1]
+        testpp_W=df_weight[testtype_sig==2]
+        testsig_W=df_weight[testtype_sig==3]
+
+        testdnn_score=model.predict(testdataset)
+        testdnn_qcd=testdnn_score[testtype_sig==1]
+        testdnn_pp=testdnn_score[testtype_sig==2]
+        testdnn_sig=testdnn_score[testtype_sig==3]
         fig, ax = plt.subplots()
-        ax.hist(testdnn_qcd, bins=40, alpha=0.8, label='QCD', stacked=True, weights=testqcd_W, range=(0, 1))
-        ax.hist(testdnn_pp, bins=40, alpha=0.8, label='DiphotonJetsbox', stacked=True, weights=testpp_W, range=(0, 1))
-        ax.hist(testdnn_sig, bins=40, alpha=0.5,label='sig', color='red', edgecolor='red', weights=testsig_W, range=(0, 1))      
+        # ax.hist([testdnn_qcd,testdnn_pp], bins=40, alpha=0.5,log=True, label=['QCD','DiphotonJetsbox'], stacked=True, weights=[testqcd_W,testpp_W], range=(0, 1))
+        ax.hist(testdnn_qcd, bins=40, alpha=0.8,log=True, label='QCD', stacked=True, weights=testqcd_W, range=(0, 1))
+        ax.hist(testdnn_pp, bins=40, alpha=0.8,log=True, label='DiphotonJetsbox', stacked=True, weights=testpp_W, range=(0, 1))
+        ax.hist(testdnn_sig, bins=40, alpha=0.5,log=True,label='sig', color='red', edgecolor='red', weights=testsig_W, range=(0, 1))      
         ax.set_title('Test DNN')
         ax.set_xlabel('DNN score')
         ax.legend()
-        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/test_DNN"+str(i)+".png")
+        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/test_DNN"+str(i)+"log.png")
         plt.show()  
-        traindnn_score=model.predict(sig_df_train)
-        traindnn_qcd=traindnn_score[traingtype==1]
-        traindnn_pp=traindnn_score[traingtype==2]
-        traindnn_sig=traindnn_score[traingtype==3]
         fig, ax = plt.subplots()
-        ax.hist(traindnn_qcd, bins=40, alpha=0.8, label='QCD', stacked=True, weights=trainqcd_W, range=(0, 1))
-        ax.hist(traindnn_pp, bins=40, alpha=0.8, label='DiphotonJetsbox', stacked=True, weights=trainpp_W, range=(0, 1))
-        ax.hist(traindnn_sig, bins=40, alpha=0.5,label='sig', color='red', edgecolor='red', weights=trainsig_W, range=(0, 1))      
+        # ax.hist([testdnn_qcd,testdnn_pp], bins=40, alpha=0.5,log=False, label=['QCD','DiphotonJetsbox'], stacked=True, weights=[testqcd_W,testpp_W], range=(0, 1))
+        ax.hist(testdnn_qcd, bins=40, alpha=0.8,log=False, label='QCD', stacked=True, weights=testqcd_W, range=(0, 1))
+        ax.hist(testdnn_pp, bins=40, alpha=0.8,log=False, label='DiphotonJetsbox', stacked=True, weights=testpp_W, range=(0, 1))
+        ax.hist(testdnn_sig, bins=40, alpha=0.5,log=False,label='sig', color='red', edgecolor='red', weights=testsig_W, range=(0, 1))      
+        ax.set_title('Test DNN')
+        ax.set_xlabel('DNN score')
+        ax.legend()
+        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/test_DNN"+str(i)+".png")
+        plt.show()  
+        traindataset=traincsv[df_train['Signal_Mass']==i]
+        traingtype_sig=traingtype[df_train['Signal_Mass']==i]
+        df_weight=df_train[df_train['Signal_Mass']==i].weights
+        trainqcd_W=df_weight[traingtype_sig==1]
+        trainpp_W=df_weight[traingtype_sig==2]
+        trainsig_W=df_weight[traingtype_sig==3]
+        traindnn_score=model.predict(traindataset)
+        traindnn_qcd=traindnn_score[traingtype_sig==1]
+        traindnn_pp=traindnn_score[traingtype_sig==2]
+        traindnn_sig=traindnn_score[traingtype_sig==3]
+        fig, ax = plt.subplots()
+        # ax.hist([traindnn_qcd,traindnn_pp], bins=40, alpha=0.5,log=True, label=['QCD','DiphotonJetsbox'], stacked=True, weights=[trainqcd_W,trainpp_W], range=(0, 1))
+        ax.hist(traindnn_qcd, bins=40, alpha=0.8,log=True, label='QCD', stacked=True, weights=trainqcd_W, range=(0, 1))
+        ax.hist(traindnn_pp, bins=40, alpha=0.8,log=True, label='DiphotonJetsbox', stacked=True, weights=trainpp_W, range=(0, 1))
+        ax.hist(traindnn_sig, bins=40, alpha=0.5,log=True,label='sig', color='red', edgecolor='red', weights=trainsig_W, range=(0, 1))      
         ax.set_title('train DNN')
         ax.set_xlabel('DNN score')
         ax.legend()
-        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/train_DNN"+str(i)+".png")
+        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/train_DNN"+str(i)+"log.png")
+        plt.show() 
+        fig, ax = plt.subplots()
+        # ax.hist([traindnn_qcd,traindnn_pp], bins=40, alpha=0.5,log=False, label=['QCD','DiphotonJetsbox'], stacked=True, weights=[trainqcd_W,trainpp_W], range=(0, 1))
+        ax.hist(traindnn_qcd, bins=40, alpha=0.8,log=False, label='QCD', stacked=True, weights=trainqcd_W, range=(0, 1))
+        ax.hist(traindnn_pp, bins=40, alpha=0.8,log=False, label='DiphotonJetsbox', stacked=True, weights=trainpp_W, range=(0, 1))
+        ax.hist(traindnn_sig, bins=40, alpha=0.5,log=False,label='sig', color='red', edgecolor='red', weights=trainsig_W, range=(0, 1))      
+        ax.set_title('train DNN')
+        ax.set_xlabel('DNN score')
+        ax.legend()
+        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/train_DNN"+str(i)+".png")
         plt.show() 
         
         plt.figure(figsize=(10,10))
 
-        plt.hist(sig_df_test.query("test_tag==0").predictions_test,log=False,label="bkg",bins=np.linspace(0,1,20),weights=sig_df_test.query("test_tag==0").weights)
-        plt.hist(sig_df_test.query("test_tag==1").predictions_test,log=False,label="signal",bins=np.linspace(0,1,20),alpha=0.7,weights=sig_df_test.query("test_tag==1").weights)
+        plt.hist(sig_df_test.query("test_tag==0").predictions_test,log=True,label="bkg",bins=np.linspace(0,1,20),weights=sig_df_test.query("test_tag==0").weights)
+        plt.hist(sig_df_test.query("test_tag==1").predictions_test,log=True,label="signal",bins=np.linspace(0,1,20),alpha=0.7,weights=sig_df_test.query("test_tag==1").weights)
         plt.legend(fontsize=18)
-        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/sigmass"+str(i)+"_test_distributions.png")
+        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/sigmass"+str(i)+"_test_distributions.png")
         plt.show()
         plt.figure(figsize=(10,10))
 
-        plt.hist(sig_df_train.query("train_tag==0").predictions,log=False,label="bkg",bins=np.linspace(0,1,20),weights=sig_df_train.query("train_tag==0").weights)
-        plt.hist(sig_df_train.query("train_tag==1").predictions,log=False,label="signal",bins=np.linspace(0,1,20),alpha=0.7,weights=sig_df_train.query("train_tag==1").weights)
+        plt.hist(sig_df_train.query("train_tag==0").predictions,log=True,label="bkg",bins=np.linspace(0,1,20),weights=sig_df_train.query("train_tag==0").weights)
+        plt.hist(sig_df_train.query("train_tag==1").predictions,log=True,label="signal",bins=np.linspace(0,1,20),alpha=0.7,weights=sig_df_train.query("train_tag==1").weights)
         plt.legend(fontsize=18)
-        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/sigmass"+str(i)+"_train_distributions.png")
+        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/sigmass"+str(i)+"_train_distributions.png")
         plt.show()
 
         background_test=sig_df_test.query("test_tag==0")
@@ -611,8 +518,98 @@ for feature in allFeatures:
         plt.ylabel('Signal efficiency',size=24)
         plt.title('ROC curve', fontdict={'fontsize': 28})
         plt.legend(fontsize=18)
-        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7qcd/sigmass"+str(i)+"trainROC.png")
+        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/sigmass"+str(i)+"trainROC.png")
+        plt.show() 
+    if compute_importance:
+
+        results=[]
+        print('computing feature importance....')
+        
+        oof_preds=model.predict(X_test_scaled,verbose=0).squeeze()
+        baseline_mae = np.mean((np.abs(oof_preds-y_test))*testweights)
+        results.append({'feature':'BASELINE','mae':baseline_mae})
+
+        for k in tqdm(range(len(training_columns)-3)):
+
+            save_col = X_test_scaled[:,k].copy()
+            np.random.shuffle(X_test_scaled[:,k])
+                            
+            # COMPUTE OOF MAE WITH FEATURE K SHUFFLED
+            oof_preds = model.predict(X_test_scaled, verbose=0).squeeze() 
+            mae = np.mean(np.abs(oof_preds-y_test)*testweights)
+            results.append({'feature':training_columns[k+3],'mae':mae})
+            X_test_scaled[:,k] = save_col            
+        df = pd.DataFrame(results)
+        df = df.sort_values('mae')
+        plt.figure(figsize=(30,20))
+        plt.barh(np.arange(len(training_columns)-2),df.mae)
+        plt.yticks(np.arange(len(training_columns)-2),df.feature.values,fontsize=18)
+        plt.title(' Feature Importance',size=18)
+        plt.ylim((-1,len(training_columns)-2))
+        plt.plot([baseline_mae,baseline_mae],[-1,(len(training_columns)-2)], '--', color='orange',
+            label=f'Baseline OOF\nMAE={baseline_mae:.3f}')
+        plt.xlabel( 'OOF MAE with feature permuted',size=18)
+        plt.ylabel('Feature',size=18)
+        plt.legend()
+        
+        plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/feature_2.png")
         plt.show()
+        df = df.sort_values('mae',ascending=False)
+        df.to_csv('/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/feature_importance2.csv',index=False)
+
+
+
+        con_df_test=pd.concat([testcsv,df_test],axis=1)
+        con_df_train=pd.concat([traincsv,df_train],axis=1)
+        mass_list=[250, 260, 270, 280, 300, 320, 350, 400, 450,550, 600, 650, 700, 750, 800,850, 900, 1000]
+        for i in mass_list:
+            results=[]
+            selection="Signal_Mass=="+str(i)
+            sig_df=con_df_test.query(selection)
+            testweights=sig_df['weights'].values
+            print("select %s events from signal%s"%(len(sig_df),i))
+            # X_test_scaled=sig_df.values[:,:35]
+            # X_test_scaled=sig_df.values[:,:(len(training_columns)-3)]
+            # X_test_scaled=sig_df.values[:,3:(len(training_columns))]
+            X_test_scaled=sig_df.values[:,:(len(training_columns)-3)]
+            y_test=sig_df['test_tag']
+            oof_preds_pnn=model.predict( X_test_scaled,verbose=0).squeeze()
+            baseline_mae = np.mean(np.abs(oof_preds_pnn-y_test)*testweights)
+            results.append({'feature':'BASELINE','mae':baseline_mae})
+
+            # for k in tqdm(range(35)):
+            for k in tqdm(range(len(training_columns)-4)):
+
+                save_col =  X_test_scaled[:,k-1].copy()
+                np.random.shuffle(X_test_scaled[:,k-1])
+                
+                # COMPUTE OOF MAE WITH FEATURE K SHUFFLED
+                oof_preds_pnn = model.predict(X_test_scaled, verbose=0).squeeze() 
+                mae = np.mean(np.abs( oof_preds_pnn-y_test )*testweights)
+                training_var=training_columns[3:]
+                results.append({'feature':training_var[k-1],'mae':mae})
+                X_test_scaled[:,k-1] = save_col 
+            df = pd.DataFrame(results)
+            df = df.sort_values('mae')
+            plt.figure(figsize=(20,18))
+            plt.barh(np.arange(len(training_columns)-3),df.mae)
+            plt.yticks(np.arange(len(training_columns)-3),df.feature.values,fontsize=18)
+            plt.xticks(fontsize=24)
+            plt.yticks(fontsize=24)
+            plt.title(' Feature Importance',size=38)
+            plt.ylim((-1,(len(training_columns)-3)))
+            plt.plot([baseline_mae,baseline_mae],[-1,(len(training_columns)-3)], '--', color='orange',
+                label=f'Baseline OOF\nMAE={baseline_mae:.3f}')
+            plt.xlabel( 'OOF MAE with feature permuted',size=28)
+            plt.ylabel('Feature',size=28)
+            plt.legend(fontsize=18)
+
+            plt.savefig("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/sigmass"+str(i)+"feature.png")
+            plt.show()
+            df = df.sort_values('mae',ascending=False)
+            df.to_csv("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7_v2/sigmass"+str(i)+"feature_importance.csv",index=False)   
+
+   
     
 
 

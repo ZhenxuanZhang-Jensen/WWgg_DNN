@@ -75,10 +75,10 @@ def calclulate_W_info(event):
     event['jet_2_phi']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_2_phi'])
     event['jet_2_mass']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['jet_2_mass'])
     W1=leadjet+subleadjet
-    event['W1_pt']=W1.pt
-    event['W1_eta']=W1.eta
-    event['W1_phi']=W1.phi
-    event['W1_mass']=W1.mass
+    event['W1_pt']=np.nan_to_num(W1.pt,nan=-1)
+    event['W1_eta']=np.nan_to_num(W1.eta,nan=-1)
+    event['W1_phi']=np.nan_to_num(W1.phi,nan=-1)
+    event['W1_mass']=np.nan_to_num(W1.mass,nan=-1)
     event['W1_E']=np.nan_to_num(W1.E, nan=-1)
     event['W1_pt']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W1_pt'])
     event['W1_eta']=ak.where(subleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W1_eta'])
@@ -120,11 +120,11 @@ def calclulate_W_info(event):
     event['W2_mass']=W2.mass
     event['W2_E']=np.nan_to_num(W2.E, nan=-1)
     
-    event['W2_E']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W2_E'])
-    event['W2_pt']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W2_pt'])
-    event['W2_eta']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W2_eta'])
-    event['W2_phi']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W2_phi'])
-    event['W2_mass']=ak.where(subsubleadjet.pt<0,(ak.ones_like(dummy)*(-1)),event['W2_mass'])
+    event['W2_E']=ak.where(((subsubleadjet.pt<0)|(subsubsubleadjet.pt<0)),(ak.ones_like(dummy)*(-1)),event['W2_E'])
+    event['W2_pt']=ak.where(((subsubleadjet.pt<0)|(subsubsubleadjet.pt<0)),(ak.ones_like(dummy)*(-1)),event['W2_pt'])
+    event['W2_eta']=ak.where(((subsubleadjet.pt<0)|(subsubsubleadjet.pt<0)),(ak.ones_like(dummy)*(-1)),event['W2_eta'])
+    event['W2_phi']=ak.where(((subsubleadjet.pt<0)|(subsubsubleadjet.pt<0)),(ak.ones_like(dummy)*(-1)),event['W2_phi'])
+    event['W2_mass']=ak.where(((subsubleadjet.pt<0)|(subsubsubleadjet.pt<0)),(ak.ones_like(dummy)*(-1)),event['W2_mass'])
         
     WW=W1+W2
     event['WW_pt']=WW.pt
@@ -133,11 +133,11 @@ def calclulate_W_info(event):
     event['WW_mass']=WW.mass
     event['WW_E']=WW.E
     
-    event['WW_E']=ak.where(((W2.pt<0)|(W1.pt<0)),(ak.ones_like(dummy)*(-1)),event['WW_E'])
-    event['WW_pt']=ak.where(((W2.pt<0)|(W1.pt<0)),(ak.ones_like(dummy)*(-1)),event['WW_pt'])
-    event['WW_eta']=ak.where(((W2.pt<0)|(W1.pt<0)),(ak.ones_like(dummy)*(-1)),event['WW_eta'])
-    event['WW_phi']=ak.where(((W2.pt<0)|(W1.pt<0)),(ak.ones_like(dummy)*(-1)),event['WW_phi'])
-    event['WW_mass']=ak.where(((W2.pt<0)|(W1.pt<0)),(ak.ones_like(dummy)*(-1)),event['WW_mass'])
+    event['WW_E']=ak.where(((event['W1_pt']<0)|(event['W2_pt']<0)),(ak.ones_like(dummy)*(-1)),event['WW_E'])
+    event['WW_pt']=ak.where(((event['W1_pt']<0)|(event['W2_pt']<0)),(ak.ones_like(dummy)*(-1)),event['WW_pt'])
+    event['WW_eta']=ak.where(((event['W1_pt']<0)|(event['W2_pt']<0)),(ak.ones_like(dummy)*(-1)),event['WW_eta'])
+    event['WW_phi']=ak.where(((event['W1_pt']<0)|(event['W2_pt']<0)),(ak.ones_like(dummy)*(-1)),event['WW_phi'])
+    event['WW_mass']=ak.where(((event['W1_pt']<0)|(event['W2_pt']<0)),(ak.ones_like(dummy)*(-1)),event['WW_mass'])
 
     return event
 def scaled_diphoton_info(event):
@@ -205,17 +205,21 @@ def getCosThetaStar_CS(objects1,objects2):
 
     return ak.flatten(abs(obj1.pz/p))
 def E_resolution(event):
-    leadpho_px=event['LeadPhoton_pt']*np.cos(event['LeadPhoton_phi'])
-    leadpho_py=event['LeadPhoton_pt']*np.sin(event['LeadPhoton_phi'])
-    leadpho_pz=event['LeadPhoton_pt']*np.sinh(event['LeadPhoton_eta'])
-    event['LeadPhoton_E']=np.sqrt(np.array(leadpho_px)*np.array(leadpho_px)+np.array(leadpho_py)*np.array(leadpho_py)+np.array(leadpho_pz)*np.array(leadpho_pz)-event['LeadPhoton_mass']*event['LeadPhoton_mass'])
+    leadphoton=vector.obj(pt=event.LeadPhoton_pt,eta=event.LeadPhoton_eta,phi=event.LeadPhoton_phi,mass=event.LeadPhoton_mass)
+    event['LeadPhoton_E']=leadphoton.E
+    # leadpho_px=event['LeadPhoton_pt']*np.cos(event['LeadPhoton_phi'])
+    # leadpho_py=event['LeadPhoton_pt']*np.sin(event['LeadPhoton_phi'])
+    # leadpho_pz=event['LeadPhoton_pt']*np.sinh(event['LeadPhoton_eta'])
+    # event['LeadPhoton_E']=np.sqrt(np.array(leadpho_px)*np.array(leadpho_px)+np.array(leadpho_py)*np.array(leadpho_py)+np.array(leadpho_pz)*np.array(leadpho_pz)-event['LeadPhoton_mass']*event['LeadPhoton_mass'])
     event['LeadPhoton_sigEoverE']=event['LeadPhoton_energyErr']/event['LeadPhoton_E']
-
-    subleadpho_px=event['SubleadPhoton_pt']*np.cos(event['SubleadPhoton_phi'])
-    subleadpho_py=event['SubleadPhoton_pt']*np.sin(event['SubleadPhoton_phi'])
-    subleadpho_pz=event['SubleadPhoton_pt']*np.sinh(event['SubleadPhoton_eta'])
-    event['SubleadPhoton_E']=np.sqrt(np.array(subleadpho_px)*np.array(subleadpho_px)+np.array(subleadpho_py)*np.array(subleadpho_py)+np.array(subleadpho_pz)*np.array(subleadpho_pz)-event['SubleadPhoton_mass']*event['SubleadPhoton_mass'])
+    subleadphoton=vector.obj(pt=event.SubleadPhoton_pt,eta=event.SubleadPhoton_eta,phi=event.SubleadPhoton_phi,mass=event.SubleadPhoton_mass)
+    event['SubleadPhoton_E']=subleadphoton.E
+    # subleadpho_px=event['SubleadPhoton_pt']*np.cos(event['SubleadPhoton_phi'])
+    # subleadpho_py=event['SubleadPhoton_pt']*np.sin(event['SubleadPhoton_phi'])
+    # subleadpho_pz=event['SubleadPhoton_pt']*np.sinh(event['SubleadPhoton_eta'])
+    # event['SubleadPhoton_E']=np.sqrt(np.array(subleadpho_px)*np.array(subleadpho_px)+np.array(subleadpho_py)*np.array(subleadpho_py)+np.array(subleadpho_pz)*np.array(subleadpho_pz)-event['SubleadPhoton_mass']*event['SubleadPhoton_mass'])
     event['SubleadPhoton_sigEoverE']=event['SubleadPhoton_energyErr']/event['SubleadPhoton_E']
+    event['Diphoton_mass_resolution']=0.5*np.sqrt(event['LeadPhoton_sigEoverE']**2+event['SubleadPhoton_sigEoverE']**2)
     return event
 def getCosThetaStar(event):
     objects1=ak.zip({
@@ -471,17 +475,22 @@ def electron(event):
     event['electron_iso_MET_mt']=np.sqrt(electron.mass*electron.mass+2*(event.electron_iso_Et*event.MET_pt-electron.pt*event.MET_pt))
     return event
 #####
-# inputfile=['/eos/user/s/shsong/HHWWgg/parquet/data/merged_nominal.parquet']
-# outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/Data_2017.parquet']
-# outputfile_SL=['/eos/user/s/shsong/HHWWgg/parquet/cat2/Data_2017.parquet']
+inputfile=['/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-800_2017/merged_nominal.parquet']
+outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/FH800.parquet']
+# inputfile=['/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-250_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-260_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-270_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-280_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-300_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-320_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-350_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-400_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-450_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-550_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-600_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-650_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-700_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-750_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-800_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-850_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-900_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-1000_2017/merged_nominal.parquet']
+# outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/FH250.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH260.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH270.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH280.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH300.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH320.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH350.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH400.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH450.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH550.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH600.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH650.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH700.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH750.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH800.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH850.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH900.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH1000.parquet']
 
-####FH DNN
-# inputfile=['/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-250_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-300_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-400_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_250to550/UL17_R_gghh_M-550_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-650_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-750_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/FH_600to1000/UL17_R_gghh_M-900_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/data/merged_nominal.parquet']
 # outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/FH250.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH300.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH400.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH550.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH650.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH750.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/FH900.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Data_2017.parquet']
+# inputfile=['/eos/user/s/shsong/HHWWgg/parquet/data_WMD/merged_nominal.parquet']
+# outputfile_FH_2jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/Data_2017.parquet']
+# outputfile_FH_3jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/Data_2017.parquet']
+# outputfile_FH_4jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/Data_2017.parquet']
 
-inputfile=['/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_DiPhotonJetsBox_M40_80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_DiPhotonJetsBox_MGG_80toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_GJet_Pt_20to40_DoubleEMEnriched_MGG_80toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_GJet_Pt_20toInf_DoubleEMEnriched_MGG_40to80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/dd/fakephoton/UL17_GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_2017/merged_nominal.parquet']
-outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/DiPhotonJetsBox_MGG_80toInf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/Gjet_Pt20_40_2017.parquet']
-outputfile_SL=['/eos/user/s/shsong/HHWWgg/parquet/cat2/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/DiPhotonJetsBox_MGG_80toInf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat2/Gjet_Pt20_40_2017.parquet']
+# inputfile=['/eos/user/s/shsong/HHWWgg/parquet/bkg/fakephoton/UL17_DiPhotonJetsBox_M40_80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/fakephoton/UL17_DiPhotonJetsBox_MGG_80toInf_2017/pp1.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/fakephoton/UL17_DiPhotonJetsBox_MGG_80toInf_2017/pp2.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/fakephoton/UL17_GJet_Pt_20to40_DoubleEMEnriched_MGG_80toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/fakephoton/UL17_GJet_Pt_20toInf_DoubleEMEnriched_MGG_40to80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/fakephoton/UL17_GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_2017/merged_nominal.parquet']
+# outputfile_FH_2jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/DiPhotonJetsBox_MGG_80toInf_20171.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/DiPhotonJetsBox_MGG_80toInf_20172.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_2jet/Gjet_Pt20_40_2017.parquet']
+# outputfile_FH_3jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/DiPhotonJetsBox_MGG_80toInf_20171.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/DiPhotonJetsBox_MGG_80toInf_20172.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_3jet/Gjet_Pt20_40_2017.parquet']
+# outputfile_FH_4jet=['/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/DiPhotonJetsBox_M40_80_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/DiPhotonJetsBox_MGG_80toInf_20171.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/DiPhotonJetsBox_MGG_80toInf_20172.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/Gjet_Pt20_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/Gjet_Pt40_Inf_2017.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7_4jet/Gjet_Pt20_40_2017.parquet']
+
 # inputfile=['/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_WWG_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_W1JetsToLNu_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_W2JetsToLNu_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_W3JetsToLNu_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_W4JetsToLNu_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/UL17_WWTo1L1Nu2Q_4f_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/WJetsToQQ_HT-200to400_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/WJetsToQQ_HT-600to800_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/WJetsToQQ_HT-400to600_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/WJets/WJetsToQQ_HT-800toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/TTbar/UL17_TTGG_0Jets/UL17_TTGG_0Jets_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/TTbar/UL17_TTGJets/UL17_TTGJets_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/TTbar/UL17_TTJets/UL17_TTJets_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/TTbar/UL17_ttWJets/UL17_ttWJets_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/QCD/UL17_QCD_Pt-30to40_MGG-80toInf_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/QCD/UL17_QCD_Pt-30toInf_MGG-40to80_2017/merged_nominal.parquet','/eos/user/s/shsong/HHWWgg/parquet/bkg/QCD/UL17_QCD_Pt-40ToInf_MGG-80ToInf_2017/merged_nominal.parquet']
 # outputfile_FH=['/eos/user/s/shsong/HHWWgg/parquet/cat7/WWG.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/W1JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/W2JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/W3JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/W4JetsToLNu.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WWTo1L1Nu2Q.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WJetsToQQ200to400.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WJetsToQQ600to800.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WJetsToQQ400to600.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/WJetsToQQ800toInf.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/TTGG_0Jets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/TTGJets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/TTJets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/ttWJets.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/QCDpt30To40.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/QCDpt30ToInf.parquet','/eos/user/s/shsong/HHWWgg/parquet/cat7/QCDpt40ToInf.parquet']
 
@@ -518,20 +527,20 @@ for file in inputfile:
 
     ak.to_parquet(eventFH, outputfile_FH[i])
 
-    eventSL=split_electron_category(eventSL)
-    print('Got electron event')
-    eventSL=calculate_Wjj(eventSL)
-    print('Got W info')
-    eventSL=calculate_photon_info(eventSL)
-    print('Got photon info')
-    eventSL=E_resolution(eventSL)
-    print('Got E resolution')
-    eventSL=electron(eventSL)
-    print('Got electron info')
-    eventSL=get_minmaxID(eventSL)
-    print('Got get_minmaxID')
-    ak.to_parquet(eventSL, outputfile_SL[i])
-    parquet_to_root(outputfile_SL[i],outputfile_SL[i].replace("parquet","root"),treename="cat2",verbose=False)
+    # eventSL=split_electron_category(eventSL)
+    # print('Got electron event')
+    # eventSL=calculate_Wjj(eventSL)
+    # print('Got W info')
+    # eventSL=calculate_photon_info(eventSL)
+    # print('Got photon info')
+    # eventSL=E_resolution(eventSL)
+    # print('Got E resolution')
+    # eventSL=electron(eventSL)
+    # print('Got electron info')
+    # eventSL=get_minmaxID(eventSL)
+    # print('Got get_minmaxID')
+    # ak.to_parquet(eventSL, outputfile_SL[i])
+    # parquet_to_root(outputfile_SL[i],outputfile_SL[i].replace("parquet","root"),treename="cat2",verbose=False)
     parquet_to_root(outputfile_FH[i],outputfile_FH[i].replace("parquet","root"),treename="cat7",verbose=False)
     i=i+1
 

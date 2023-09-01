@@ -77,20 +77,23 @@ void deriveSFs()
       // "/eos/user/s/shsong/HHWWgg/root/cat2/Data_2017.root"
       // "/eos/user/s/shsong/HHWWgg/root/cat7_2jet/Data_2017.root"
       // "/eos/user/s/shsong/HHWWgg/root/cat7_3jet/Data_2017.root"
-      "/eos/user/s/shsong/HHWWgg/root/cat7_4jet/Data_2017.root"
+      // "/eos/user/s/shsong/HHWWgg/root/cat7_4jet/Data_2017.root"
+      "/eos/user/s/shsong/HHWWgg/root/cat7/Data_2017.root"
     }};
   filenames_map["qcd"] = { vector<string>{
       // "/eos/user/s/shsong/HHWWgg/root/cat2/DatadrivenQCD.root"
       // "/eos/user/s/shsong/HHWWgg/root/cat7_2jet/DatadrivenQCD.root"
       // "/eos/user/s/shsong/HHWWgg/root/cat7_3jet/DatadrivenQCD.root"
-      "/eos/user/s/shsong/HHWWgg/root/cat7_4jet/DatadrivenQCD.root"
+      // "/eos/user/s/shsong/HHWWgg/root/cat7_4jet/DatadrivenQCD.root"
+      "/eos/user/s/shsong/HHWWgg/root/cat7/DatadrivenQCD.root"
       // "/eos/user/s/shsong/HHWWgg/root/cat2/DatadrivenQCD_usingcat7Gjet.root"
     }};
   filenames_map["diphoton"] = { vector<string>{
       // "/eos/user/s/shsong/HHWWgg/root/cat2/DiPhotonJetsBox.root"
       // "/eos/user/s/shsong/HHWWgg/root/cat7_2jet/DiPhotonJetsBox.root"
       // "/eos/user/s/shsong/HHWWgg/root/cat7_3jet/DiPhotonJetsBox.root"
-      "/eos/user/s/shsong/HHWWgg/root/cat7_4jet/DiPhotonJetsBox.root"
+      // "/eos/user/s/shsong/HHWWgg/root/cat7_4jet/DiPhotonJetsBox.root"
+      "/eos/user/s/shsong/HHWWgg/root/cat7/DiPhotonJetsBox.root"
     }};
 
   // treenames_map["diphoton"] = { vector<string>{
@@ -187,7 +190,8 @@ void deriveSFs()
   h_minphotonID["MCtot"]->GetYaxis()->SetRangeUser(0., 1.3*TMath::Max(h_minphotonID["MCtot"]->GetMaximum(),h_minphotonID["data"]->GetMaximum()) );
   // c1->SaveAs("Diphoton_minID_cat7_2jet.png");
   // c1->SaveAs("Diphoton_minID_cat7_3jet.png");
-  c1->SaveAs("Diphoton_minID_cat7_4jet.png");
+  // c1->SaveAs("Diphoton_minID_cat7_4jet.png");
+  c1->SaveAs("Diphoton_minID_cat7.png");
 
   TCanvas* c12 = new TCanvas();
   h_maxphotonID["MCtot"]->Add(h_maxphotonID["otherMC"]);
@@ -207,7 +211,8 @@ void deriveSFs()
   cout<<"observed: "<<SFdiphoton<<" "<<SFdatadrivenQCD<<" chi2="<<chi2<<endl;
   // c12->SaveAs("Diphoton_maxID_cat7_2jet.png");
   // c12->SaveAs("Diphoton_maxID_cat7_3jet.png");
-  c12->SaveAs("Diphoton_maxID_cat7_4jet.png");
+  // c12->SaveAs("Diphoton_maxID_cat7_4jet.png");
+  c12->SaveAs("Diphoton_maxID_cat7.png");
   TCanvas* c2 = new TCanvas();
   h_minphotonID["diphoton"]->Scale(SFdiphoton);
   h_minphotonID["qcd"]->Scale(SFdatadrivenQCD);
@@ -219,7 +224,8 @@ void deriveSFs()
   h_minphotonID["scaledMCtot"]->GetYaxis()->SetRangeUser(0., 1.3*TMath::Max(h_minphotonID["scaledMCtot"]->GetMaximum(),h_minphotonID["data"]->GetMaximum()) );
   // c2->SaveAs("minID_scale_cat7_2jet.png");
   // c2->SaveAs("minID_scale_cat7_3jet.png");
-  c2->SaveAs("minID_scale_cat7_4jet.png");
+  // c2->SaveAs("minID_scale_cat7_4jet.png");
+  c2->SaveAs("minID_scale_cat7.png");
   TCanvas* c22 = new TCanvas();
   h_maxphotonID["diphoton"]->Scale(SFdiphoton);
   h_maxphotonID["qcd"]->Scale(SFdatadrivenQCD);
@@ -233,7 +239,8 @@ void deriveSFs()
   h_maxphotonID["scaledMCtot"]->GetYaxis()->SetRangeUser(0., 1.3*TMath::Max(h_maxphotonID["scaledMCtot"]->GetMaximum(),h_maxphotonID["data"]->GetMaximum()) );
   // c22->SaveAs("maxID_scale_cat7_2jet.png");
   // c22->SaveAs("maxID_scale_cat7_3jet.png");
-  c22->SaveAs("maxID_scale_cat7_4jet.png");
+  // c22->SaveAs("maxID_scale_cat7_4jet.png");
+  c22->SaveAs("maxID_scale_cat7.png");
 }
 
 
