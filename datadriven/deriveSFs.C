@@ -74,39 +74,47 @@ void deriveSFs()
   //     "/eos/user/s/shsong/combined_WWgg/parquet/bkg/cat2/rename/Diphoton.root"
   //   }};
   filenames_map["data"] = { vector<string>{
-      // "/eos/user/s/shsong/HHWWgg/root/cat2/Data_2017.root"
-      // "/eos/user/s/shsong/HHWWgg/root/cat7_2jet/Data_2017.root"
-      // "/eos/user/s/shsong/HHWWgg/root/cat7_3jet/Data_2017.root"
-      // "/eos/user/s/shsong/HHWWgg/root/cat7_4jet/Data_2017.root"
-      "/eos/user/s/shsong/HHWWgg/root/cat7/Data_2017.root"
+      // "/eos/user/s/shsong/HHWWgg/root/cat2_electron/Data_2017.root"
+
+      // "/eos/user/s/shsong/HHWWgg/root/cat3/Data_2017.root"
+      "/eos/user/s/shsong/HHWWgg/root/cat4/Data_2017.root"
+      // "/eos/user/s/shsong/HHWWgg/root/cat7/Data_2017.root"
     }};
   filenames_map["qcd"] = { vector<string>{
-      // "/eos/user/s/shsong/HHWWgg/root/cat2/DatadrivenQCD.root"
-      // "/eos/user/s/shsong/HHWWgg/root/cat7_2jet/DatadrivenQCD.root"
-      // "/eos/user/s/shsong/HHWWgg/root/cat7_3jet/DatadrivenQCD.root"
-      // "/eos/user/s/shsong/HHWWgg/root/cat7_4jet/DatadrivenQCD.root"
-      "/eos/user/s/shsong/HHWWgg/root/cat7/DatadrivenQCD.root"
-      // "/eos/user/s/shsong/HHWWgg/root/cat2/DatadrivenQCD_usingcat7Gjet.root"
+      // "/eos/user/s/shsong/HHWWgg/root/cat2_electron/DatadrivenQCD.root"
+
+      // "/eos/user/s/shsong/HHWWgg/root/cat3/DatadrivenQCD.root"
+      "/eos/user/s/shsong/HHWWgg/root/cat4/DatadrivenQCD.root"
+      // "/eos/user/s/shsong/HHWWgg/root/cat7/DatadrivenQCD.root"
+      // "/eos/user/s/shsong/HHWWgg/root/cat2_electron/DatadrivenQCD_usingcat7Gjet.root"
     }};
   filenames_map["diphoton"] = { vector<string>{
-      // "/eos/user/s/shsong/HHWWgg/root/cat2/DiPhotonJetsBox.root"
-      // "/eos/user/s/shsong/HHWWgg/root/cat7_2jet/DiPhotonJetsBox.root"
-      // "/eos/user/s/shsong/HHWWgg/root/cat7_3jet/DiPhotonJetsBox.root"
-      // "/eos/user/s/shsong/HHWWgg/root/cat7_4jet/DiPhotonJetsBox.root"
-      "/eos/user/s/shsong/HHWWgg/root/cat7/DiPhotonJetsBox.root"
+      // "/eos/user/s/shsong/HHWWgg/root/cat2_electron/DiPhotonJetsBox.root"
+      // "/eos/user/s/shsong/HHWWgg/root/cat7/DiPhotonJetsBox.root"
+      // "/eos/user/s/shsong/HHWWgg/root/cat3/DiPhotonJetsBox.root"
+      "/eos/user/s/shsong/HHWWgg/root/cat4/DiPhotonJetsBox.root"
     }};
 
   // treenames_map["diphoton"] = { vector<string>{
   //     "DiphotonJetsBox"
   //   }};
   treenames_map["data"] = { vector<string>{
-      "cat7"
+      // "cat7"
+      // "cat2"
+      "cat4"
+      // "cat3"
     }};
   treenames_map["qcd"] = { vector<string>{
-      "cat7"
+      // "cat7"
+      // "cat2"
+      "cat4"
+      // "cat3"
     }};
   treenames_map["diphoton"] = { vector<string>{
-      "cat7"
+      // "cat7"
+      // "cat2"
+      "cat4"
+      // "cat3"
     }};
   // lumis_map["diphoton"] = {vector<float>{
   //   1
@@ -136,10 +144,10 @@ void deriveSFs()
 
     h_minphotonID[samplename] = new TH1F(Form("h_minphotonID_%s",samplename.c_str()),
 					 Form("h_minphotonID_%s",samplename.c_str()),
-					 34,-0.7,1);
+					 17,-0.7,1);
     h_maxphotonID[samplename] = new TH1F(Form("h_maxphotonID_%s",samplename.c_str()),
 					 Form("h_maxphotonID_%s",samplename.c_str()),
-					 34,-0.7,1);
+					 17,-0.7,1);
 
     for( unsigned ifile=0; ifile<filenames.size(); ++ifile) {
       TChain* ch = new TChain();
@@ -173,12 +181,12 @@ void deriveSFs()
 
   // For now assume no other MC --> h_minphotonID["otherMC"] and h_maxphotonID["otherMC"] are left empty
   // this can be updated to further improve the data/MC agreement of few percent
-  h_minphotonID["otherMC"] = new TH1F("constMC1","constMC1",34,-0.7,1);  
-  h_minphotonID["MCtot"] = new TH1F("MCtot1","MCtot1",34,-0.7,1);
-  h_minphotonID["scaledMCtot"] = new TH1F("MCtot1_scaled","MCtot1_scaled",34,-0.7,1);
-  h_maxphotonID["otherMC"] = new TH1F("constMC2","constMC2",34,-0.7,1); 
-  h_maxphotonID["MCtot"] = new TH1F("MCtot2","MCtot2",34,-0.7,1);
-  h_maxphotonID["scaledMCtot"] = new TH1F("MCtot2_scaled","MCtot2_scaled",34,-0.7,1);
+  h_minphotonID["otherMC"] = new TH1F("constMC1","constMC1",17,-0.7,1);  
+  h_minphotonID["MCtot"] = new TH1F("MCtot1","MCtot1",17,-0.7,1);
+  h_minphotonID["scaledMCtot"] = new TH1F("MCtot1_scaled","MCtot1_scaled",17,-0.7,1);
+  h_maxphotonID["otherMC"] = new TH1F("constMC2","constMC2",17,-0.7,1); 
+  h_maxphotonID["MCtot"] = new TH1F("MCtot2","MCtot2",17,-0.7,1);
+  h_maxphotonID["scaledMCtot"] = new TH1F("MCtot2_scaled","MCtot2_scaled",17,-0.7,1);
 
   TCanvas* c1 = new TCanvas();
   h_minphotonID["MCtot"]->Add(h_minphotonID["otherMC"]);
@@ -188,10 +196,11 @@ void deriveSFs()
   h_minphotonID["data"]->SetMarkerStyle(20);
   h_minphotonID["data"]->Draw("E1 same");
   h_minphotonID["MCtot"]->GetYaxis()->SetRangeUser(0., 1.3*TMath::Max(h_minphotonID["MCtot"]->GetMaximum(),h_minphotonID["data"]->GetMaximum()) );
-  // c1->SaveAs("Diphoton_minID_cat7_2jet.png");
-  // c1->SaveAs("Diphoton_minID_cat7_3jet.png");
-  // c1->SaveAs("Diphoton_minID_cat7_4jet.png");
-  c1->SaveAs("Diphoton_minID_cat7.png");
+
+  // c1->SaveAs("Diphoton_minID_cat7.png");
+  // c1->SaveAs("Diphoton_minID_cat3.png");
+  c1->SaveAs("Diphoton_minID_cat4.png");
+  // c1->SaveAs("Diphoton_minID_cat2.png");
 
   TCanvas* c12 = new TCanvas();
   h_maxphotonID["MCtot"]->Add(h_maxphotonID["otherMC"]);
@@ -209,10 +218,11 @@ void deriveSFs()
   double SFdiphoton,SFdatadrivenQCD;
   double chi2 = f->GetMinimumXY(SFdiphoton,SFdatadrivenQCD);
   cout<<"observed: "<<SFdiphoton<<" "<<SFdatadrivenQCD<<" chi2="<<chi2<<endl;
-  // c12->SaveAs("Diphoton_maxID_cat7_2jet.png");
-  // c12->SaveAs("Diphoton_maxID_cat7_3jet.png");
-  // c12->SaveAs("Diphoton_maxID_cat7_4jet.png");
-  c12->SaveAs("Diphoton_maxID_cat7.png");
+
+  // c12->SaveAs("Diphoton_maxID_cat7.png");
+  // c12->SaveAs("Diphoton_maxID_cat3.png");
+  c12->SaveAs("Diphoton_maxID_cat4.png");
+  // c12->SaveAs("Diphoton_maxID_cat2.png");
   TCanvas* c2 = new TCanvas();
   h_minphotonID["diphoton"]->Scale(SFdiphoton);
   h_minphotonID["qcd"]->Scale(SFdatadrivenQCD);
@@ -222,10 +232,11 @@ void deriveSFs()
   h_minphotonID["scaledMCtot"]->Draw("hist");
   h_minphotonID["data"]->Draw("E1 same");
   h_minphotonID["scaledMCtot"]->GetYaxis()->SetRangeUser(0., 1.3*TMath::Max(h_minphotonID["scaledMCtot"]->GetMaximum(),h_minphotonID["data"]->GetMaximum()) );
-  // c2->SaveAs("minID_scale_cat7_2jet.png");
-  // c2->SaveAs("minID_scale_cat7_3jet.png");
-  // c2->SaveAs("minID_scale_cat7_4jet.png");
-  c2->SaveAs("minID_scale_cat7.png");
+
+  // c2->SaveAs("minID_scale_cat7.png");
+  // c2->SaveAs("minID_scale_cat3.png");
+  c2->SaveAs("minID_scale_cat4.png");
+  // c2->SaveAs("minID_scale_cat2.png");
   TCanvas* c22 = new TCanvas();
   h_maxphotonID["diphoton"]->Scale(SFdiphoton);
   h_maxphotonID["qcd"]->Scale(SFdatadrivenQCD);
@@ -237,10 +248,11 @@ void deriveSFs()
   cout<<"QCD:"<<h_maxphotonID["qcd"]->Integral()<<endl;
   cout<<"DiPhoton:"<<h_maxphotonID["diphoton"]->Integral()<<endl;
   h_maxphotonID["scaledMCtot"]->GetYaxis()->SetRangeUser(0., 1.3*TMath::Max(h_maxphotonID["scaledMCtot"]->GetMaximum(),h_maxphotonID["data"]->GetMaximum()) );
-  // c22->SaveAs("maxID_scale_cat7_2jet.png");
-  // c22->SaveAs("maxID_scale_cat7_3jet.png");
-  // c22->SaveAs("maxID_scale_cat7_4jet.png");
-  c22->SaveAs("maxID_scale_cat7.png");
+
+  // c22->SaveAs("maxID_scale_cat7.png");
+  // c22->SaveAs("maxID_scale_cat3.png");
+  c22->SaveAs("maxID_scale_cat4.png");
+  // c22->SaveAs("maxID_scale_cat2.png");
 }
 
 
