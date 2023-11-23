@@ -42,18 +42,15 @@ newSubleadPhoton_mvaID_WP90=[]
 newLeadPhoton_mvaID_WP90=[]
 newpassPhotonMVA90=[]
 new_weight=[]
-failed_photon_EB=[]
-failed_photon_EE=[]
 for i in range(0,nevents):
     Data_tree.GetEntry(i)
+    # weights.append(1)
     if((Data_tree.LeadPhoton_mvaID_WP90 == True) & (Data_tree.SubleadPhoton_mvaID_WP90 ==True)):
         LeadPhoton_mvaID=-1
         SubleadPhoton_mvaID=-1
         LeadPhoton_mvaID_WP90=0
         SubleadPhoton_mvaID_WP90=0
         newpassPhotonMVA90.append(0)
-        failed_photon_EB.append(0)
-        failed_photon_EE.append(0)
         newSubleadPhoton_mvaID.append(SubleadPhoton_mvaID)
         newLeadPhoton_mvaID.append(LeadPhoton_mvaID)
         newSubleadPhoton_mvaID_WP90.append(SubleadPhoton_mvaID_WP90)
@@ -65,8 +62,6 @@ for i in range(0,nevents):
         LeadPhoton_mvaID_WP90=0
         SubleadPhoton_mvaID_WP90=0
         newpassPhotonMVA90.append(0)
-        failed_photon_EB.append(0)
-        failed_photon_EE.append(0)
         newSubleadPhoton_mvaID.append(SubleadPhoton_mvaID)
         newLeadPhoton_mvaID.append(LeadPhoton_mvaID)
         newSubleadPhoton_mvaID_WP90.append(SubleadPhoton_mvaID_WP90)
@@ -74,8 +69,6 @@ for i in range(0,nevents):
         new_weight.append(-999)
     elif((Data_tree.LeadPhoton_mvaID_WP90 == False) & (Data_tree.SubleadPhoton_mvaID_WP90 == True)):
         if abs(Data_tree.LeadPhoton_eta)<1.5:#EB
-            failed_photon_EB_value=1
-            failed_photon_EE_value=0
             LeadPhoton_mvaID=EBphotonIDPDF_fake.GetRandom(-0.02,1)
             SubleadPhoton_mvaID=Data_tree.SubleadPhoton_mvaID
             LeadPhoton_mvaID_WP90=True
@@ -86,9 +79,7 @@ for i in range(0,nevents):
 
             if abs(Data_tree.SubleadPhoton_eta)>1.5:
                 shiftweight=EEphotonIDPDF_fake.Integral(-0.26,Data_tree.SubleadPhoton_mvaID) / EEphotonIDPDF_fake.Integral(-0.9,-0.26);
-        elif (abs(Data_tree.LeadPhoton_eta)>1.5):#EE
-            failed_photon_EB_value=0
-            failed_photon_EE_value=1
+        if (abs(Data_tree.LeadPhoton_eta)>1.5):#EE
             LeadPhoton_mvaID=EEphotonIDPDF_fake.GetRandom(-0.26,1)
             SubleadPhoton_mvaID=Data_tree.SubleadPhoton_mvaID
             LeadPhoton_mvaID_WP90=True
@@ -105,10 +96,6 @@ for i in range(0,nevents):
             SubleadPhoton_mvaID_WP90=0
             passPhotonMVA90=0
             shiftweight==-999
-            failed_photon_EB_value=0
-            failed_photon_EE_value=0
-        failed_photon_EB.append(failed_photon_EB_value)
-        failed_photon_EE.append(failed_photon_EE_value)
         newpassPhotonMVA90.append(passPhotonMVA90)
         newSubleadPhoton_mvaID.append(SubleadPhoton_mvaID)
         newLeadPhoton_mvaID.append(LeadPhoton_mvaID)
@@ -117,8 +104,6 @@ for i in range(0,nevents):
         new_weight.append(shiftweight)
     elif((Data_tree.LeadPhoton_mvaID_WP90 == True) &(Data_tree.SubleadPhoton_mvaID_WP90 == False)):
         if abs(Data_tree.SubleadPhoton_eta)<1.5:#EB
-            failed_photon_EB_value=1
-            failed_photon_EE_value=0
             SubleadPhoton_mvaID=EBphotonIDPDF_fake.GetRandom(-0.02,1)
             LeadPhoton_mvaID=Data_tree.LeadPhoton_mvaID
             SubleadPhoton_mvaID_WP90=True
@@ -131,9 +116,7 @@ for i in range(0,nevents):
                 # shiftweight= EEphotonIDPDF_fake.Integral(-0.9,-0.26)/EEphotonIDPDF_fake.Integral(-0.26,Data_tree.LeadPhoton_mvaID)
 
             # new_weight = EBphotonIDPDF_fake.Integral(-0.02,1) / EBphotonIDPDF_fake.Integral(-0.9,-0.02);
-        elif (abs(Data_tree.SubleadPhoton_eta)>1.5):#EE
-            failed_photon_EB_value=0
-            failed_photon_EE_value=1
+        if (abs(Data_tree.SubleadPhoton_eta)>1.5):#EE
             SubleadPhoton_mvaID=EEphotonIDPDF_fake.GetRandom(-0.26,1)
             LeadPhoton_mvaID=Data_tree.LeadPhoton_mvaID
             SubleadPhoton_mvaID_WP90=True
@@ -150,22 +133,16 @@ for i in range(0,nevents):
             SubleadPhoton_mvaID=-1
             LeadPhoton_mvaID_WP90=0
             SubleadPhoton_mvaID_WP90=0
-            failed_photon_EB_value=0
-            failed_photon_EE_value=0
             passPhotonMVA90=0
             shiftweight=-999
-            failed_photon_EB.append(False)
-            failed_photon_EE.append(False)
         newSubleadPhoton_mvaID.append(SubleadPhoton_mvaID)
         newLeadPhoton_mvaID.append(LeadPhoton_mvaID)
         newSubleadPhoton_mvaID_WP90.append(SubleadPhoton_mvaID_WP90)
         newLeadPhoton_mvaID_WP90.append(LeadPhoton_mvaID_WP90)
         newpassPhotonMVA90.append(passPhotonMVA90)
         new_weight.append(shiftweight)
-        failed_photon_EB.append(failed_photon_EB_value)
-        failed_photon_EE.append(failed_photon_EE_value)
 
-d={"is_passPhotonMVA90":newpassPhotonMVA90,"newSubleadPhoton_mvaID":newSubleadPhoton_mvaID,"newLeadPhoton_mvaID":newLeadPhoton_mvaID,"newSubleadPhoton_mvaID_WP90":newSubleadPhoton_mvaID_WP90,"newLeadPhoton_mvaID_WP90":newLeadPhoton_mvaID_WP90,"new_weight":new_weight,"failed_photon_EB":failed_photon_EB,"failed_photon_EE":failed_photon_EE}
+d={"is_passPhotonMVA90":newpassPhotonMVA90,"newSubleadPhoton_mvaID":newSubleadPhoton_mvaID,"newLeadPhoton_mvaID":newLeadPhoton_mvaID,"newSubleadPhoton_mvaID_WP90":newSubleadPhoton_mvaID_WP90,"newLeadPhoton_mvaID_WP90":newLeadPhoton_mvaID_WP90,"new_weight":new_weight}
 dataframe=pandas.DataFrame(d) 
 DataFile["Diphoton_maxID"]=numpy.maximum(dataframe.newLeadPhoton_mvaID, dataframe.newSubleadPhoton_mvaID)
 DataFile["Diphoton_minID"]=numpy.minimum(dataframe.newLeadPhoton_mvaID, dataframe.newSubleadPhoton_mvaID)
@@ -174,16 +151,16 @@ DataFile["SubleadPhoton_mvaID"]=dataframe.newSubleadPhoton_mvaID
 DataFile["is_passPhotonMVA90"]=awkward.ones_like(DataFile.is_passPhotonMVA90)
 DataFile["LeadPhoton_mvaID_WP90"]=awkward.ones_like(DataFile.LeadPhoton_mvaID_WP90)
 DataFile["SubleadPhoton_mvaID_WP90"]=awkward.ones_like(DataFile.LeadPhoton_mvaID_WP90)
-DataFile["FailedPhotonID_EB"]=dataframe.failed_photon_EB
-DataFile["FailedPhotonID_EE"]=dataframe.failed_photon_EE
-# DataFile["weight_central"]=dataframe.new_weight
-DataFile=DataFile[((DataFile.FailedPhotonID_EE==True)|(DataFile.FailedPhotonID_EB==True))]
-QCDEEfailed=DataFile[DataFile.FailedPhotonID_EE==True]
-QCDEBfailed=DataFile[DataFile.FailedPhotonID_EB==True]
+# DataFileshift["weight_central"]=dataframe.new_weight
+DataFile=DataFile[DataFile.n_WP90==1]
+# DataFileshift=DataFileshift[DataFileshift.n_WP90==1]
 
-awkward.to_parquet(QCDEEfailed,"/eos/user/s/shsong/HiggsDNA/parquet/cat8/DatadrivenQCDEE.parquet")
-awkward.to_parquet(QCDEBfailed,"/eos/user/s/shsong/HiggsDNA/parquet/cat8/DatadrivenQCDEB.parquet")
+
+# awkward.to_parquet(DataFileshift,"/eos/user/s/shsong/HiggsDNA/parquet/cat8/DatadrivenQCDshift.parquet")
+
 awkward.to_parquet(DataFile,"/eos/user/s/shsong/HiggsDNA/parquet/cat8/DatadrivenQCD.parquet")
+
 parquet_to_root("/eos/user/s/shsong/HiggsDNA/parquet/cat8/DatadrivenQCD.parquet","/eos/user/s/shsong/HiggsDNA/root/cat8/DatadrivenQCD.root",treename="cat8",verbose=False)
-parquet_to_root("/eos/user/s/shsong/HiggsDNA/parquet/cat8/DatadrivenQCDEE.parquet","/eos/user/s/shsong/HiggsDNA/root/cat8/DatadrivenQCDEE.root",treename="cat8",verbose=False)
-parquet_to_root("/eos/user/s/shsong/HiggsDNA/parquet/cat8/DatadrivenQCDEB.parquet","/eos/user/s/shsong/HiggsDNA/root/cat8/DatadrivenQCDEB.root",treename="cat8",verbose=False)
+# parquet_to_root("/eos/user/s/shsong/HiggsDNA/parquet/cat8/DatadrivenQCDshift.parquet","/eos/user/s/shsong/HiggsDNA/root/cat8/DatadrivenQCDshift.root",treename="cat8",verbose=False)
+
+# dataframe("data_weight.csv")

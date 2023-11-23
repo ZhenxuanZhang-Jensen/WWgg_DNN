@@ -11,7 +11,7 @@ plotdir="/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7"
 # useXGB=sys.argv[2]
 useXGB=bool(False)
 # exts=["1_features","2_features","3_features","4_features","5_features","6_features","7_features","8_features","9_features","10_features","11_features","12_features","13_features","14_features","15_features","16_features","17_features","18_features","19_features","20_features"]
-exts=["36_features"]
+exts=["55_features"]
 if(useXGB=="True"):
     useXGB=True
 else:
@@ -55,7 +55,7 @@ for ext in exts:
         if (useXGB):
             points="Relu_BDT_"+str(points)
         else:
-            points="Relu_"+ext+"_30epochs_"+str(points)
+            points="Relu_"+ext+"_50epochs_"+str(points)
         if(not useXGB ):
             history = open("/hpcfs/cms/cmsgpu/shaoweisong/DNN/cat7/history_%s.json"%points, 'r', encoding='utf-8')
             history=json.load(history)
